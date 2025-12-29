@@ -42,7 +42,7 @@ export function ShareDialog({
   const [choice, setChoice] = useState<'public' | 'private'>(selectedVisibilityType);
   const [isShared, setIsShared] = useState<boolean>(selectedVisibilityType === 'public');
 
-  const shareUrl = chatId ? `https://scira.ai/search/${chatId}` : '';
+  const shareUrl = chatId ? `https://rovo.ai/search/${chatId}` : '';
 
   useEffect(() => {
     if (!isOpen) {
@@ -121,7 +121,7 @@ export function ShareDialog({
   const handleNativeShare = async () => {
     try {
       await navigator.share({
-        title: 'Shared Scira Chat',
+        title: 'Shared Rovo Chat',
         url: shareUrl,
       });
     } catch (error) {

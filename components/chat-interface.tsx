@@ -95,7 +95,7 @@ const ChatInterface = memo(
     const [query] = useQueryState('query', parseAsString.withDefault(''));
     const [q] = useQueryState('q', parseAsString.withDefault(''));
     const [groupParam] = useQueryState('group', parseAsString.withDefault(''));
-    const [input, setInput] = useLocalStorage<string>('scira-draft-input', '');
+    const [input, setInput] = useLocalStorage<string>('rovo-draft-input', '');
     const [localChatTitle, setLocalChatTitle] = useState<string>(chatTitle || (initialChatId ? 'Chat' : 'New Chat'));
     const [isEditingTitle, setIsEditingTitle] = useState(false); // legacy inline edit (to be removed)
     const [titleInput, setTitleInput] = useState(localChatTitle);
@@ -142,12 +142,12 @@ const ChatInterface = memo(
       queueMicrotask(() => measureHeaderMenuAlignment());
     }, [pathname, localChatTitle, headerMenuOpen, measureHeaderMenuAlignment]);
 
-    const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
+    const [selectedModel, setSelectedModel] = useLocalStorage('rovo-selected-model', 'rovo-default');
     const initialGroupDefault = (
       groupParam ? (groupParam as unknown as SearchGroupId) : ('web' as SearchGroupId)
     ) as SearchGroupId;
     const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>(
-      'scira-selected-group',
+      'rovo-selected-group',
       initialGroupDefault,
     );
     const effectiveSelectedGroup = (
@@ -155,7 +155,7 @@ const ChatInterface = memo(
     ) as SearchGroupId;
     const [selectedConnectors, setSelectedConnectors] = useState<ConnectorProvider[]>([]);
     const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useLocalStorage(
-      'scira-custom-instructions-enabled',
+      'rovo-custom-instructions-enabled',
       true,
     );
 
@@ -173,24 +173,24 @@ const ChatInterface = memo(
 
     // Get persisted values for dialog states
     const [persistedHasShownUpgradeDialog, setPersitedHasShownUpgradeDialog] = useLocalStorage(
-      'scira-upgrade-prompt-shown',
+      'rovo-upgrade-prompt-shown',
       false,
     );
     const [persistedHasShownSignInPrompt, setPersitedHasShownSignInPrompt] = useLocalStorage(
-      'scira-signin-prompt-shown',
+      'rovo-signin-prompt-shown',
       false,
     );
     const [persistedHasShownLookoutAnnouncement, setPersitedHasShownLookoutAnnouncement] = useLocalStorage(
-      'scira-lookout-announcement-shown',
+      'rovo-lookout-announcement-shown',
       false,
     );
 
     const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
-      'scira-search-provider',
+      'rovo-search-provider',
       'firecrawl',
     );
 
-    const [extremeSearchProvider, __] = useLocalStorage<'exa' | 'parallel'>('scira-extreme-search-provider', 'exa');
+    const [extremeSearchProvider, __] = useLocalStorage<'exa' | 'parallel'>('rovo-extreme-search-provider', 'exa');
 
     // Use reducer for complex state management
     const [chatState, dispatch] = useReducer(
@@ -364,9 +364,9 @@ const ChatInterface = memo(
 
       // If current model requires pro but user is not pro, switch to default
       // Also prevent infinite loops by ensuring we're not already on the default model
-      if (currentModelRequiresPro && !isUserPro && selectedModel !== 'scira-default') {
-        console.log(`Auto-switching from pro model '${selectedModel}' to 'scira-default' - user lost pro access`);
-        setSelectedModel('scira-default');
+      if (currentModelRequiresPro && !isUserPro && selectedModel !== 'rovo-default') {
+        console.log(`Auto-switching from pro model '${selectedModel}' to 'rovo-default' - user lost pro access`);
+        setSelectedModel('rovo-default');
       }
     }, [selectedModel, isUserPro, proStatusLoading, setSelectedModel]);
 
@@ -1073,7 +1073,7 @@ const ChatInterface = memo(
                     </div>
                     <div className="inline-flex items-center gap-3">
                       <h1 className="text-4xl sm:text-5xl mb-0! text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
-                        scira
+                        rovo
                       </h1>
                       {isUserPro && (
                         <h1 className="text-2xl font-baumans! leading-4 inline-block px-3! pt-1! pb-2.5! rounded-xl shadow-sm m-0! mt-2! bg-linear-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-linear-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">

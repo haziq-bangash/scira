@@ -19,7 +19,7 @@ import {
 } from 'ai';
 import { createMemoryTools } from '@/lib/tools/supermemory';
 import {
-  scira,
+  rovo,
   requiresAuthentication,
   requiresProSubscription,
   shouldBypassRateLimits,
@@ -479,16 +479,16 @@ export async function POST(req: Request) {
       }
 
       const result = streamText({
-        model: scira.languageModel(model),
+        model: rovo.languageModel(model),
         messages: prunedMessages,
         ...getModelParameters(model),
         stopWhen: stepCountIs(5),
-        ...(model === "scira-default" || model === "scira-grok4.1-fast-thinking" || model === "scira-glm-4.6" || model === "scira-glm-4.6v-flash" || model === "scira-glm-4.6v" ? {
+        ...(model === "rovo-default" || model === "rovo-grok4.1-fast-thinking" || model === "rovo-glm-4.6" || model === "rovo-glm-4.6v-flash" || model === "rovo-glm-4.6v" ? {
           maxOutputTokens: getMaxOutputTokens(model),
         } : {}),
         maxRetries: 10,
         activeTools:
-          model === 'scira-qwen-coder-plus'
+          model === 'rovo-qwen-coder-plus'
             ? [...activeTools].filter((tool) => tool !== 'code_interpreter')
             : [...activeTools],
         experimental_transform: markdownJoinerTransform(),
@@ -497,11 +497,11 @@ export async function POST(req: Request) {
           (customInstructions && (isCustomInstructionsEnabled ?? true)
             ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}`
             : '\n') +
-          (latitude && longitude && userPreferencesResult?.preferences?.['scira-location-metadata-enabled'] === true
+          (latitude && longitude && userPreferencesResult?.preferences?.['rovo-location-metadata-enabled'] === true
             ? `\n\nThe user's location is ${latitude}, ${longitude}.`
             : ''),
         toolChoice: 'auto',
-        ...(model === 'scira-anthropic' || model === 'scira-anthropic-think'
+        ...(model === 'rovo-anthropic' || model === 'rovo-anthropic-think'
           ? {
             headers: {
               'anthropic-beta': 'context-1m-2025-08-07',
@@ -510,95 +510,95 @@ export async function POST(req: Request) {
         providerOptions: {
           gateway: {
             only: ['openai', 'google', 'zai', 'arcee-ai', 'deepseek', 'alibaba', 'baseten', 'minimax', 'fireworks', 'bedrock', 'vercel'],
-            ...(model === 'scira-kimi-k2-v2-thinking' || model === 'scira-kimi-k2-v2'
+            ...(model === 'rovo-kimi-k2-v2-thinking' || model === 'rovo-kimi-k2-v2'
               ? {
                 order: ['baseten', 'fireworks'],
               }
               : {}),
-            ...(model === 'scira-qwen-coder' || model === 'scira-deepseek-v3' || model === 'scira-qwen-235'
+            ...(model === 'rovo-qwen-coder' || model === 'rovo-deepseek-v3' || model === 'rovo-qwen-235'
               ? {
                 order: ['baseten'],
               }
               : {}),
-            ...(model === 'scira-nova-2-lite'
+            ...(model === 'rovo-nova-2-lite'
               ? {
                 order: ['bedrock'],
               }
               : {}),
           },
           openai: {
-            ...(model !== 'scira-qwen-coder'
+            ...(model !== 'rovo-qwen-coder'
               ? {
                 parallelToolCalls: false,
               }
               : {}),
-            ...((model === 'scira-gpt5' ||
-              model === 'scira-gpt5-mini' ||
-              model === 'scira-o3' ||
-              model === 'scira-gpt5-nano' ||
-              model === 'scira-gpt5-codex' ||
-              model === 'scira-gpt5-medium' ||
-              model === 'scira-o4-mini' ||
-              model === 'scira-gpt-4.1' ||
-              model === 'scira-gpt-4.1-mini' ||
-              model === 'scira-gpt-4.1-nano' ||
-              model === 'scira-gpt-5.1' ||
-              model === 'scira-gpt-5.1-thinking' ||
-              model === 'scira-gpt-5.1-codex' ||
-              model === 'scira-gpt-5.1-codex-mini' ||
-              model === 'scira-gpt-5.1-codex-max' ||
-              model === 'scira-gpt-5.2' ||
-              model === 'scira-gpt-5.2-thinking'
+            ...((model === 'rovo-gpt5' ||
+              model === 'rovo-gpt5-mini' ||
+              model === 'rovo-o3' ||
+              model === 'rovo-gpt5-nano' ||
+              model === 'rovo-gpt5-codex' ||
+              model === 'rovo-gpt5-medium' ||
+              model === 'rovo-o4-mini' ||
+              model === 'rovo-gpt-4.1' ||
+              model === 'rovo-gpt-4.1-mini' ||
+              model === 'rovo-gpt-4.1-nano' ||
+              model === 'rovo-gpt-5.1' ||
+              model === 'rovo-gpt-5.1-thinking' ||
+              model === 'rovo-gpt-5.1-codex' ||
+              model === 'rovo-gpt-5.1-codex-mini' ||
+              model === 'rovo-gpt-5.1-codex-max' ||
+              model === 'rovo-gpt-5.2' ||
+              model === 'rovo-gpt-5.2-thinking'
               ? {
                 reasoningEffort:
-                  model === 'scira-gpt5-nano' || model === 'scira-gpt5' || model === 'scira-gpt5-mini'
+                  model === 'rovo-gpt5-nano' || model === 'rovo-gpt5' || model === 'rovo-gpt5-mini'
                     ? 'minimal'
-                    : model === 'scira-gpt-5.1' || model === 'scira-gpt-5.2'
+                    : model === 'rovo-gpt-5.1' || model === 'rovo-gpt-5.2'
                       ? 'none'
                       : 'medium',
                 parallelToolCalls: false,
                 reasoningSummary: 'detailed',
-                promptCacheKey: 'scira-oai',
-                ...(model === 'scira-gpt-5.1' ||
-                  model === 'scira-gpt-5.2' ||
-                  model === 'scira-gpt-5.2-thinking' ||
-                  model === 'scira-gpt-5.1-codex' ||
-                  model === 'scira-gpt-5.1-codex-mini' ||
-                  model === 'scira-gpt-5.1-codex-max' ||
-                  model === 'scira-gpt5' ||
-                  model === 'scira-gpt5-codex' ||
-                  model === 'scira-gpt4.1'
+                promptCacheKey: 'rovo-oai',
+                ...(model === 'rovo-gpt-5.1' ||
+                  model === 'rovo-gpt-5.2' ||
+                  model === 'rovo-gpt-5.2-thinking' ||
+                  model === 'rovo-gpt-5.1-codex' ||
+                  model === 'rovo-gpt-5.1-codex-mini' ||
+                  model === 'rovo-gpt-5.1-codex-max' ||
+                  model === 'rovo-gpt5' ||
+                  model === 'rovo-gpt5-codex' ||
+                  model === 'rovo-gpt4.1'
                   ? {
                     promptCacheRetention: '24h',
                   }
                   : {}),
                 store: false,
                 // only for reasoning models
-                ...(model === 'scira-gpt-5.1' ||
-                  model === 'scira-gpt-5.1-codex' ||
-                  model === 'scira-gpt-5.1-codex-mini' ||
-                  model === 'scira-gpt5' ||
-                  model === 'scira-gpt5-codex' ||
-                  model === 'scira-gpt-5.1-thinking' ||
-                  model === 'scira-gpt5-nano' ||
-                  model === 'scira-gpt5-mini' ||
-                  model === 'scira-gpt-5.1-codex-max' ||
-                  model === 'scira-gpt-5.2' ||
-                  model === 'scira-gpt-5.2-thinking'
+                ...(model === 'rovo-gpt-5.1' ||
+                  model === 'rovo-gpt-5.1-codex' ||
+                  model === 'rovo-gpt-5.1-codex-mini' ||
+                  model === 'rovo-gpt5' ||
+                  model === 'rovo-gpt5-codex' ||
+                  model === 'rovo-gpt-5.1-thinking' ||
+                  model === 'rovo-gpt5-nano' ||
+                  model === 'rovo-gpt5-mini' ||
+                  model === 'rovo-gpt-5.1-codex-max' ||
+                  model === 'rovo-gpt-5.2' ||
+                  model === 'rovo-gpt-5.2-thinking'
                   ? {
                     include: ['reasoning.encrypted_content'],
                   }
                   : {}),
                 textVerbosity:
-                  model === 'scira-o3' ||
-                    model === 'scira-gpt5-codex' ||
-                    model === 'scira-gpt-5.1-codex' ||
-                    model === 'scira-gpt-5.1-codex-mini' ||
-                    model === 'scira-gpt-5.1-codex-max' ||
-                    model === 'scira-o4-mini' ||
-                    model === 'scira-gpt-4.1' ||
-                    model === 'scira-gpt-4.1-mini' ||
-                    model === 'scira-gpt-4.1-nano'
+                  model === 'rovo-o3' ||
+                    model === 'rovo-gpt5-codex' ||
+                    model === 'rovo-gpt-5.1-codex' ||
+                    model === 'rovo-gpt-5.1-codex-mini' ||
+                    model === 'rovo-gpt-5.1-codex-max' ||
+                    model === 'rovo-o4-mini' ||
+                    model === 'rovo-gpt-4.1' ||
+                    model === 'rovo-gpt-4.1-mini' ||
+                    model === 'rovo-gpt-4.1-nano'
                     ? 'medium'
                     : 'high',
               }
@@ -608,13 +608,13 @@ export async function POST(req: Request) {
             parallelToolCalls: false,
           },
           groq: {
-            ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
+            ...(model === 'rovo-gpt-oss-20' || model === 'rovo-gpt-oss-120'
               ? {
                 reasoningEffort: 'high',
                 reasoningFormat: 'hidden',
               }
               : {}),
-            ...(model === 'scira-qwen-32b'
+            ...(model === 'rovo-qwen-32b'
               ? {
                 reasoningEffort: 'none',
               }
@@ -627,7 +627,7 @@ export async function POST(req: Request) {
             parallel_function_calling: false,
           } satisfies XaiProviderOptions,
           cohere: {
-            ...(model === 'scira-cmd-a-think'
+            ...(model === 'rovo-cmd-a-think'
               ? {
                 thinking: {
                   type: 'enabled',
@@ -637,7 +637,7 @@ export async function POST(req: Request) {
               : {}),
           } satisfies CohereChatModelOptions,
           anthropic: {
-            ...(model === 'scira-anthropic-think' || model === 'scira-anthropic-opus-think'
+            ...(model === 'rovo-anthropic-think' || model === 'rovo-anthropic-opus-think'
               ? {
                 sendReasoning: true,
                 thinking: {
@@ -649,7 +649,7 @@ export async function POST(req: Request) {
             disableParallelToolUse: true,
           } satisfies AnthropicProviderOptions,
           google: {
-            ...(model === 'scira-google-think' || model === 'scira-google-pro-think'
+            ...(model === 'rovo-google-think' || model === 'rovo-google-pro-think'
               ? {
                 thinkingConfig: {
                   thinkingBudget: 400,
@@ -657,7 +657,7 @@ export async function POST(req: Request) {
                 },
               }
               : {}),
-            ...(model === 'scira-gemini-3-pro'
+            ...(model === 'rovo-gemini-3-pro'
               ? {
                 thinkingConfig: {
                   thinkingLevel: 'low',
@@ -665,7 +665,7 @@ export async function POST(req: Request) {
                 },
               }
               : {}),
-            ...(model === 'scira-gemini-3-flash-think'
+            ...(model === 'rovo-gemini-3-flash-think'
               ? {
                 thinkingConfig: {
                   thinkingLevel: 'medium',
@@ -676,7 +676,7 @@ export async function POST(req: Request) {
             threshold: 'OFF',
           } satisfies GoogleGenerativeAIProviderOptions,
           openrouter: {
-            ...(model === 'scira-anthropic-think' || model === 'scira-anthropic-opus-think'
+            ...(model === 'rovo-anthropic-think' || model === 'rovo-anthropic-opus-think'
               ? {
                 reasoning: {
                   exclude: false,
@@ -727,7 +727,7 @@ export async function POST(req: Request) {
             get_weather_data: weatherTool,
 
             text_translate: textTranslateTool,
-            ...(model !== 'scira-qwen-coder-plus' ? { code_interpreter: codeInterpreterTool } : {}),
+            ...(model !== 'rovo-qwen-coder-plus' ? { code_interpreter: codeInterpreterTool } : {}),
             track_flight: flightTrackerTool,
             datetime: datetimeTool,
             extreme_search: extremeSearchTool(dataStream, extremeSearchProvider || 'exa'),
@@ -765,7 +765,7 @@ export async function POST(req: Request) {
           }
 
           const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-default'),
+            model: rovo.languageModel('rovo-default'),
             schema: tool.inputSchema,
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,

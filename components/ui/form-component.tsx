@@ -121,7 +121,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
     const [searchQuery, setSearchQuery] = useState('');
 
     // Global model order (Pro users): top-level hook to satisfy Rules of Hooks
-    const [globalModelOrder] = useSyncedPreferences<string[]>('scira-model-order-global', [] as string[]);
+    const [globalModelOrder] = useSyncedPreferences<string[]>('rovo-model-order-global', [] as string[]);
 
     const normalizeText = useCallback((input: string): string => {
       return input
@@ -408,10 +408,10 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     // Persisted ordering: category order and per-category model order
     const [modelCategoryOrder] = useLocalStorage<string[]>(
-      'scira-model-category-order',
+      'rovo-model-category-order',
       isProUser ? ['Pro', 'Experimental', 'Free'] : ['Free', 'Experimental', 'Pro'],
     );
-    const [modelOrderMap] = useLocalStorage<Record<string, string[]>>('scira-model-order', {});
+    const [modelOrderMap] = useLocalStorage<Record<string, string[]>>('rovo-model-order', {});
 
     const orderedGroupEntries = useMemo(() => {
       const baseOrder =
@@ -472,19 +472,19 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       const isCurrentModelRestricted = isModelRestrictedInRegion(selectedModel, countryCode || undefined);
 
       // If current model is restricted in user's region, switch to default
-      if (isCurrentModelRestricted && selectedModel !== 'scira-default') {
+      if (isCurrentModelRestricted && selectedModel !== 'rovo-default') {
         console.log(
-          `Auto-switching from restricted model '${selectedModel}' to 'scira-default' - model not available in region ${countryCode}`,
+          `Auto-switching from restricted model '${selectedModel}' to 'rovo-default' - model not available in region ${countryCode}`,
         );
-        setSelectedModel('scira-default');
+        setSelectedModel('rovo-default');
         return;
       }
 
       // If current model requires pro but user is not pro, switch to default
       // Also prevent infinite loops by ensuring we're not already on the default model
-      if (currentModelExists && currentModelRequiresPro && !isProUser && selectedModel !== 'scira-default') {
-        console.log(`Auto-switching from pro model '${selectedModel}' to 'scira-default' - user lost pro access`);
-        setSelectedModel('scira-default');
+      if (currentModelExists && currentModelRequiresPro && !isProUser && selectedModel !== 'rovo-default') {
+        console.log(`Auto-switching from pro model '${selectedModel}' to 'rovo-default' - user lost pro access`);
+        setSelectedModel('rovo-default');
       }
     }, [selectedModel, isProUser, isSubscriptionLoading, setSelectedModel, availableModels, countryCode]);
 
@@ -1058,7 +1058,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                         </>
                       ) : (
                         <div className="flex items-center gap-3 flex-wrap">
-                          <span className="text-xl sm:text-2xl font-be-vietnam-pro">Scira</span>
+                          <span className="text-xl sm:text-2xl font-be-vietnam-pro">Rovo</span>
                           <ProBadge className="text-white! bg-white/20! ring-white/30! font-extralight!" />
                         </div>
                       )}
@@ -1138,7 +1138,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               <div className="flex items-center gap-4">
                 <CheckIcon className="size-4 text-primary shrink-0" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Scira Lookout</p>
+                  <p className="text-sm font-medium text-foreground">Rovo Lookout</p>
                   <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
                 </div>
               </div>
@@ -1701,7 +1701,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
     );
 
     // Get search provider from localStorage with reactive updates
-    const [searchProvider, setSearchProvider] = useLocalStorage<SearchProvider>('scira-search-provider', 'exa');
+    const [searchProvider, setSearchProvider] = useLocalStorage<SearchProvider>('rovo-search-provider', 'exa');
     const [providerMenuOpen, setProviderMenuOpen] = useState(false);
     const currentProviderOption = useMemo(
       () => WEB_SEARCH_PROVIDERS.find((option) => option.value === searchProvider) ?? WEB_SEARCH_PROVIDERS[0],
@@ -1726,7 +1726,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
 
     // Persisted order for groups - must match settings-dialog.tsx
     const [groupOrder] = useSyncedPreferences<SearchGroupId[]>(
-      'scira-group-order',
+      'rovo-group-order',
       dynamicSearchGroups.map((g) => g.id),
     );
 
@@ -2797,8 +2797,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
           });
 
           if (extremeModels.length > 0) {
-            // Prioritize: scira-default if available, otherwise first free model, then first available
-            const defaultModel = extremeModels.find((m) => m.value === 'scira-default');
+            // Prioritize: rovo-default if available, otherwise first free model, then first available
+            const defaultModel = extremeModels.find((m) => m.value === 'rovo-default');
             const firstFreeModel = extremeModels.find((m) => !m.pro);
             const fallbackModel = extremeModels[0];
 
@@ -4160,7 +4160,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
               <div className="flex items-center gap-4">
                 <CheckIcon className="size-4 text-primary shrink-0" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Scira Lookout</p>
+                  <p className="text-sm font-medium text-foreground">Rovo Lookout</p>
                   <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
                 </div>
               </div>

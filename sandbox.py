@@ -5,7 +5,7 @@ import os
 daytona = Daytona(DaytonaConfig(api_key=os.getenv("DAYTONA_API_KEY")))
 
 # Generate a unique name for the image
-snapshot_name = f"scira-analysis:{int(time.time())}"
+snapshot_name = f"rovo-analysis:{int(time.time())}"
 
 # Create a Python image
 image = (

@@ -99,27 +99,27 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/ph',
-        destination: 'https://www.producthunt.com/posts/scira',
+        destination: 'https://www.producthunt.com/posts/rovo',
         permanent: true,
       },
       {
         source: '/raycast',
-        destination: 'https://www.raycast.com/zaidmukaddam/scira',
+        destination: 'https://www.raycast.com/zaidmukaddam/rovo',
         permanent: true,
       },
       {
         source: '/plst',
-        destination: 'https://peerlist.io/zaidmukaddam/project/scira-ai-30',
+        destination: 'https://peerlist.io/zaidmukaddam/project/rovo-ai-30',
         permanent: true,
       },
       {
         source: '/blog',
-        destination: 'https://blog.scira.ai',
+        destination: 'https://blog.rovo.ai',
         permanent: true,
       },
       {
-        source: '/askscirabot',
-        destination: 'https://t.me/askscirabot',
+        source: '/askrovobot',
+        destination: 'https://t.me/askrovobot',
         permanent: true,
       },
     ];

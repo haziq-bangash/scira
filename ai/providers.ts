@@ -35,8 +35,8 @@ const anannas = createOpenAICompatible({
   baseURL: 'https://api.anannas.ai/v1',
   apiKey: process.env.ANANNAS_API_KEY,
   headers: {
-    'HTTP-Referer': 'https://scira.ai',
-    'X-Title': 'Scira AI',
+    'HTTP-Referer': 'https://rovo.ai',
+    'X-Title': 'Rovo AI',
     'Content-Type': 'application/json',
   },
 });
@@ -59,184 +59,184 @@ const baseten = createOpenAICompatible({
 });
 
 
-export const scira = customProvider({
+export const rovo = customProvider({
   languageModels: {
-    'scira-default': xai('grok-4-1-fast-non-reasoning'),
-    'scira-grok4.1-fast-thinking': xai('grok-4-1-fast'),
-    'scira-nano': groq('llama-3.3-70b-versatile'),
-    'scira-name': mistral('ministral-3b-2512'),
-    'scira-grok-3-mini': xai('grok-3-mini'),
-    'scira-grok-3': xai('grok-3'),
-    'scira-grok-4': xai('grok-4'),
-    'scira-grok-4-fast': xai('grok-4-fast-non-reasoning'),
-    'scira-grok-4-fast-think': xai('grok-4-fast'),
-    'scira-code': xai('grok-code-fast-1'),
-    'scira-enhance': groq('moonshotai/kimi-k2-instruct-0905'),
-    'scira-follow-up': xaiEU('grok-4-1-fast-non-reasoning'),
-    'scira-qwen-4b': huggingface.chatModel('Qwen/Qwen3-4B-Instruct-2507:nscale'),
-    'scira-qwen-4b-thinking': wrapLanguageModel({
+    'rovo-default': xai('grok-4-1-fast-non-reasoning'),
+    'rovo-grok4.1-fast-thinking': xai('grok-4-1-fast'),
+    'rovo-nano': groq('llama-3.3-70b-versatile'),
+    'rovo-name': mistral('ministral-3b-2512'),
+    'rovo-grok-3-mini': xai('grok-3-mini'),
+    'rovo-grok-3': xai('grok-3'),
+    'rovo-grok-4': xai('grok-4'),
+    'rovo-grok-4-fast': xai('grok-4-fast-non-reasoning'),
+    'rovo-grok-4-fast-think': xai('grok-4-fast'),
+    'rovo-code': xai('grok-code-fast-1'),
+    'rovo-enhance': groq('moonshotai/kimi-k2-instruct-0905'),
+    'rovo-follow-up': xaiEU('grok-4-1-fast-non-reasoning'),
+    'rovo-qwen-4b': huggingface.chatModel('Qwen/Qwen3-4B-Instruct-2507:nscale'),
+    'rovo-qwen-4b-thinking': wrapLanguageModel({
       model: huggingface.chatModel('Qwen/Qwen3-4B-Thinking-2507:nscale'),
       middleware: [middlewareWithStartWithReasoning],
     }),
-    'scira-gpt-4.1-nano': openai('gpt-4.1-nano'),
-    'scira-gpt-4.1-mini': openai('gpt-4.1-mini'),
-    'scira-gpt-4.1': openai('gpt-4.1'),
-    'scira-gpt-5.1': openai('gpt-5.1'),
-    'scira-gpt-5.1-thinking': openai('gpt-5.1'),
-    'scira-gpt-5.2': openai('gpt-5.2'),
-    'scira-gpt-5.2-thinking': openai('gpt-5.2'),
-    'scira-gpt-5.1-codex': openai('gpt-5.1-codex'),
-    'scira-gpt-5.1-codex-mini': openai('gpt-5.1-codex-mini'),
-    'scira-gpt-5.1-codex-max': openai('gpt-5.1-codex-max'),
-    'scira-gpt5': openai('gpt-5'),
-    'scira-gpt5-medium': openai('gpt-5'),
-    'scira-gpt5-mini': openai('gpt-5-mini'),
-    'scira-gpt5-nano': openai('gpt-5-nano'),
-    'scira-o3': openai('o3'),
-    'scira-o4-mini': openai('o4-mini'),
-    'scira-gpt5-codex': openai('gpt-5-codex'),
-    'scira-qwen-32b': wrapLanguageModel({
+    'rovo-gpt-4.1-nano': openai('gpt-4.1-nano'),
+    'rovo-gpt-4.1-mini': openai('gpt-4.1-mini'),
+    'rovo-gpt-4.1': openai('gpt-4.1'),
+    'rovo-gpt-5.1': openai('gpt-5.1'),
+    'rovo-gpt-5.1-thinking': openai('gpt-5.1'),
+    'rovo-gpt-5.2': openai('gpt-5.2'),
+    'rovo-gpt-5.2-thinking': openai('gpt-5.2'),
+    'rovo-gpt-5.1-codex': openai('gpt-5.1-codex'),
+    'rovo-gpt-5.1-codex-mini': openai('gpt-5.1-codex-mini'),
+    'rovo-gpt-5.1-codex-max': openai('gpt-5.1-codex-max'),
+    'rovo-gpt5': openai('gpt-5'),
+    'rovo-gpt5-medium': openai('gpt-5'),
+    'rovo-gpt5-mini': openai('gpt-5-mini'),
+    'rovo-gpt5-nano': openai('gpt-5-nano'),
+    'rovo-o3': openai('o3'),
+    'rovo-o4-mini': openai('o4-mini'),
+    'rovo-gpt5-codex': openai('gpt-5-codex'),
+    'rovo-qwen-32b': wrapLanguageModel({
       model: groq('qwen/qwen3-32b'),
       middleware,
     }),
-    'scira-qwen-32b-thinking': wrapLanguageModel({
+    'rovo-qwen-32b-thinking': wrapLanguageModel({
       model: groq('qwen/qwen3-32b'),
       middleware,
     }),
-    'scira-gpt-oss-20': wrapLanguageModel({
+    'rovo-gpt-oss-20': wrapLanguageModel({
       model: groq('openai/gpt-oss-20b'),
       middleware,
     }),
-    'scira-gpt-oss-120': wrapLanguageModel({
+    'rovo-gpt-oss-120': wrapLanguageModel({
       model: baseten('openai/gpt-oss-120b'),
       middleware,
     }),
-    'scira-trinity-mini': wrapLanguageModel({
+    'rovo-trinity-mini': wrapLanguageModel({
       model: gateway('arcee-ai/trinity-mini'),
       middleware,
     }),
-    'scira-kat-coder': novita.chatModel('kat-coder'),
-    'scira-deepseek-v3': baseten('deepseek-ai/DeepSeek-V3-0324'), // baseten
-    'scira-deepseek-v3.1-terminus': novita.chatModel('deepseek/deepseek-v3.1-terminus'),
-    'scira-deepseek-chat': gateway('deepseek/deepseek-v3.2'),
-    'scira-deepseek-chat-think': gateway('deepseek/deepseek-v3.2-thinking'),
-    'scira-deepseek-chat-exp': novita.chatModel('deepseek/deepseek-v3.2-exp'),
-    'scira-deepseek-chat-think-exp': wrapLanguageModel({
+    'rovo-kat-coder': novita.chatModel('kat-coder'),
+    'rovo-deepseek-v3': baseten('deepseek-ai/DeepSeek-V3-0324'), // baseten
+    'rovo-deepseek-v3.1-terminus': novita.chatModel('deepseek/deepseek-v3.1-terminus'),
+    'rovo-deepseek-chat': gateway('deepseek/deepseek-v3.2'),
+    'rovo-deepseek-chat-think': gateway('deepseek/deepseek-v3.2-thinking'),
+    'rovo-deepseek-chat-exp': novita.chatModel('deepseek/deepseek-v3.2-exp'),
+    'rovo-deepseek-chat-think-exp': wrapLanguageModel({
       model: gateway('deepseek/deepseek-v3.2-exp-thinking'),
       middleware,
     }),
-    'scira-v0-10': gateway('vercel/v0-1.0-md'),
-    'scira-v0-15': gateway('vercel/v0-1.5-md'),
-    'scira-deepseek-r1': wrapLanguageModel({
+    'rovo-v0-10': gateway('vercel/v0-1.0-md'),
+    'rovo-v0-15': gateway('vercel/v0-1.5-md'),
+    'rovo-deepseek-r1': wrapLanguageModel({
       model: novita.chatModel('deepseek/deepseek-r1-turbo'),
       middleware,
     }),
-    'scira-deepseek-r1-0528': wrapLanguageModel({
+    'rovo-deepseek-r1-0528': wrapLanguageModel({
       model: novita.chatModel('deepseek/deepseek-r1-0528'),
       middleware,
     }),
-    'scira-qwen-coder-small': novita.chatModel('qwen/qwen3-coder-30b-a3b-instruct'),
-    'scira-qwen-coder': baseten('Qwen/Qwen3-Coder-480B-A35B-Instruct'), // baseten
-    'scira-qwen-coder-plus': gateway('alibaba/qwen3-coder-plus'),
-    'scira-qwen-30': huggingface.chatModel('Qwen/Qwen3-30B-A3B-Instruct-2507:nebius'),
-    'scira-qwen-30-think': wrapLanguageModel({
+    'rovo-qwen-coder-small': novita.chatModel('qwen/qwen3-coder-30b-a3b-instruct'),
+    'rovo-qwen-coder': baseten('Qwen/Qwen3-Coder-480B-A35B-Instruct'), // baseten
+    'rovo-qwen-coder-plus': gateway('alibaba/qwen3-coder-plus'),
+    'rovo-qwen-30': huggingface.chatModel('Qwen/Qwen3-30B-A3B-Instruct-2507:nebius'),
+    'rovo-qwen-30-think': wrapLanguageModel({
       model: huggingface.chatModel('Qwen/Qwen3-30B-A3B-Thinking-2507:nebius'),
       middleware,
     }),
-    'scira-qwen-3-vl-30b': novita.chatModel('qwen/qwen3-vl-30b-a3b-instruct'),
-    'scira-qwen-3-vl-30b-thinking': wrapLanguageModel({
+    'rovo-qwen-3-vl-30b': novita.chatModel('qwen/qwen3-vl-30b-a3b-instruct'),
+    'rovo-qwen-3-vl-30b-thinking': wrapLanguageModel({
       model: novita.chatModel('qwen/qwen3-vl-30b-a3b-thinking'),
       middleware,
     }),
-    'scira-qwen-3-next': huggingface.chatModel('Qwen/Qwen3-Next-80B-A3B-Instruct:hyperbolic'),
-    'scira-qwen-3-next-think': wrapLanguageModel({
+    'rovo-qwen-3-next': huggingface.chatModel('Qwen/Qwen3-Next-80B-A3B-Instruct:hyperbolic'),
+    'rovo-qwen-3-next-think': wrapLanguageModel({
       model: huggingface.chatModel('Qwen/Qwen3-Next-80B-A3B-Thinking:hyperbolic'),
       middleware: [middlewareWithStartWithReasoning],
     }),
-    'scira-qwen-3-max': novita.chatModel('qwen/qwen3-max'),
-    'scira-qwen-3-max-preview': gateway('alibaba/qwen3-max-preview'),
-    'scira-qwen-235': gateway('alibaba/qwen-3-235b'),
-    'scira-qwen-235-think': wrapLanguageModel({
+    'rovo-qwen-3-max': novita.chatModel('qwen/qwen3-max'),
+    'rovo-qwen-3-max-preview': gateway('alibaba/qwen3-max-preview'),
+    'rovo-qwen-235': gateway('alibaba/qwen-3-235b'),
+    'rovo-qwen-235-think': wrapLanguageModel({
       model: huggingface.chatModel('Qwen/Qwen3-235B-A22B-Thinking-2507:fireworks-ai'),
       middleware: [middlewareWithStartWithReasoning],
     }),
-    'scira-qwen-3-vl': novita.chatModel('qwen/qwen3-vl-235b-a22b-instruct'),
-    'scira-qwen-3-vl-thinking': wrapLanguageModel({
+    'rovo-qwen-3-vl': novita.chatModel('qwen/qwen3-vl-235b-a22b-instruct'),
+    'rovo-qwen-3-vl-thinking': wrapLanguageModel({
       model: novita.chatModel('qwen/qwen3-vl-235b-a22b-thinking'),
       middleware,
     }),
-    'scira-glm-air': novita.chatModel('zai-org/glm-4.5-air'),
-    'scira-glm': wrapLanguageModel({
+    'rovo-glm-air': novita.chatModel('zai-org/glm-4.5-air'),
+    'rovo-glm': wrapLanguageModel({
       model: novita.chatModel('zai-org/glm-4.5'),
       middleware,
     }),
-    'scira-glm-4.6': wrapLanguageModel({
+    'rovo-glm-4.6': wrapLanguageModel({
       model: huggingface.chatModel('zai-org/GLM-4.6:cerebras'),
       middleware,
     }),
-    'scira-glm-4.6v-flash': wrapLanguageModel({
+    'rovo-glm-4.6v-flash': wrapLanguageModel({
       model: huggingface.chatModel('zai-org/GLM-4.6V-Flash:zai-org'),
       middleware,
     }),
-    'scira-glm-4.6v': wrapLanguageModel({
+    'rovo-glm-4.6v': wrapLanguageModel({
       model: huggingface.chatModel('zai-org/GLM-4.6V:zai-org'),
       middleware,
     }),
-    'scira-glm-4.7': wrapLanguageModel({
+    'rovo-glm-4.7': wrapLanguageModel({
       model: baseten('zai-org/GLM-4.7'),
       middleware,
     }),
-    'scira-minimax': wrapLanguageModel({
+    'rovo-minimax': wrapLanguageModel({
       model: novita.chatModel('minimaxai/minimax-m1-80k'),
       middleware,
     }),
-    'scira-minimax-m2': wrapLanguageModel({
+    'rovo-minimax-m2': wrapLanguageModel({
       model: gateway('minimax/minimax-m2'),
       middleware,
     }),
-    'scira-minimax-m2.1': wrapLanguageModel({
+    'rovo-minimax-m2.1': wrapLanguageModel({
       model: gateway('minimax/minimax-m2.1'),
       middleware,
     }),
-    'scira-minimax-m2.1-lightning': wrapLanguageModel({
+    'rovo-minimax-m2.1-lightning': wrapLanguageModel({
       model: gateway('minimax/minimax-m2.1-lightning'),
       middleware,
     }),
-    'scira-cmd-a': cohere('command-a-03-2025'),
-    'scira-cmd-a-think': cohere('command-a-reasoning-08-2025'),
-    'scira-kimi-k2-v2': baseten('moonshotai/Kimi-K2-Instruct-0905'), // baseten
-    'scira-kimi-k2-v2-thinking': wrapLanguageModel({
+    'rovo-cmd-a': cohere('command-a-03-2025'),
+    'rovo-cmd-a-think': cohere('command-a-reasoning-08-2025'),
+    'rovo-kimi-k2-v2': baseten('moonshotai/Kimi-K2-Instruct-0905'), // baseten
+    'rovo-kimi-k2-v2-thinking': wrapLanguageModel({
       model: baseten('moonshotai/Kimi-K2-Thinking'), // baseten
       middleware,
     }),
-    'scira-haiku': anannas.chatModel('anthropic/claude-3-5-haiku-20241022'),
-    'scira-ministral-3b': mistral('ministral-3b-2512'),
-    'scira-ministral-8b': mistral('ministral-8b-2512'),
-    'scira-ministral-14b': mistral('ministral-14b-2512'),
-    'scira-mistral-large': mistral('mistral-large-2512'),
-    'scira-mistral-medium': mistral('mistral-medium-2508'),
-    'scira-magistral-small': mistral('magistral-small-2509'),
-    'scira-magistral-medium': mistral('magistral-medium-2509'),
-    'scira-devstral': mistral('devstral-2512'),
-    'scira-devstral-small': mistral('labs-devstral-small-2512'),
-    'scira-google-lite': google('gemini-flash-lite-latest'),
-    'scira-google': google('gemini-flash-latest'),
-    'scira-google-think': google('gemini-flash-latest'),
-    'scira-google-pro': google('gemini-2.5-pro'),
-    'scira-google-pro-think': google('gemini-2.5-pro'),
-    'scira-gemini-3-flash': google('gemini-3-flash-preview'),
-    'scira-gemini-3-flash-think': google('gemini-3-flash-preview'),
-    'scira-gemini-3-pro': google('gemini-3-pro-preview'),
-    'scira-anthropic-small': anthropic('claude-haiku-4-5'),
-    'scira-anthropic': anthropic('claude-sonnet-4-5'),
-    'scira-anthropic-think': anthropic('claude-sonnet-4-5'),
-    'scira-mimo-v2-flash': wrapLanguageModel({
+    'rovo-haiku': anannas.chatModel('anthropic/claude-3-5-haiku-20241022'),
+    'rovo-ministral-3b': mistral('ministral-3b-2512'),
+    'rovo-ministral-8b': mistral('ministral-8b-2512'),
+    'rovo-ministral-14b': mistral('ministral-14b-2512'),
+    'rovo-mistral-large': mistral('mistral-large-2512'),
+    'rovo-mistral-medium': mistral('mistral-medium-2508'),
+    'rovo-magistral-small': mistral('magistral-small-2509'),
+    'rovo-magistral-medium': mistral('magistral-medium-2509'),
+    'rovo-devstral': mistral('devstral-2512'),
+    'rovo-devstral-small': mistral('labs-devstral-small-2512'),
+    'rovo-google-lite': google('gemini-flash-lite-latest'),
+    'rovo-google': google('gemini-flash-latest'),
+    'rovo-google-think': google('gemini-flash-latest'),
+    'rovo-google-pro': google('gemini-2.5-pro'),
+    'rovo-google-pro-think': google('gemini-2.5-pro'),
+    'rovo-gemini-3-flash': google('gemini-3-flash-preview'),
+    'rovo-gemini-3-flash-think': google('gemini-3-flash-preview'),
+    'rovo-gemini-3-pro': google('gemini-3-pro-preview'),
+    'rovo-anthropic-small': anthropic('claude-haiku-4-5'),
+    'rovo-anthropic': anthropic('claude-sonnet-4-5'),
+    'rovo-anthropic-think': anthropic('claude-sonnet-4-5'),
+    'rovo-mimo-v2-flash': wrapLanguageModel({
       model: novita.chatModel('xiaomimimo/mimo-v2-flash'),
       middleware,
     }),
-    'scira-anthropic-opus': anthropic('claude-opus-4-5'),
-    'scira-anthropic-opus-think': anthropic('claude-opus-4-5'),
-    'scira-nova-2-lite': gateway('amazon/nova-2-lite'),
+    'rovo-anthropic-opus': anthropic('claude-opus-4-5'),
+    'rovo-anthropic-opus-think': anthropic('claude-opus-4-5'),
+    'rovo-nova-2-lite': gateway('amazon/nova-2-lite'),
   },
 });
 
@@ -272,7 +272,7 @@ interface Model {
 export const models: Model[] = [
   // Models (xAI)
   {
-    value: 'scira-grok-3-mini',
+    value: 'rovo-grok-3-mini',
     label: 'Grok 3 Mini',
     description: "xAI's recent smallest LLM",
     vision: false,
@@ -286,7 +286,7 @@ export const models: Model[] = [
     maxOutputTokens: 16000,
   },
   {
-    value: 'scira-grok-3',
+    value: 'rovo-grok-3',
     label: 'Grok 3',
     description: "xAI's recent smartest LLM",
     vision: false,
@@ -300,7 +300,7 @@ export const models: Model[] = [
     maxOutputTokens: 16000,
   },
   {
-    value: 'scira-grok-4',
+    value: 'rovo-grok-4',
     label: 'Grok 4',
     description: "xAI's most intelligent LLM",
     vision: true,
@@ -314,7 +314,7 @@ export const models: Model[] = [
     maxOutputTokens: 16000,
   },
   {
-    value: 'scira-default',
+    value: 'rovo-default',
     label: 'Grok 4.1 Fast',
     description: "xAI's greatest and fastest multimodel LLM",
     vision: true,
@@ -331,7 +331,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-grok4.1-fast-thinking',
+    value: 'rovo-grok4.1-fast-thinking',
     label: 'Grok 4.1 Fast Thinking',
     description: "xAI's greatest and fastest multimodel reasoning LLM",
     vision: true,
@@ -348,7 +348,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-grok-4-fast',
+    value: 'rovo-grok-4-fast',
     label: 'Grok 4 Fast',
     description: "xAI's previous fastest multimodel LLM",
     vision: true,
@@ -365,7 +365,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-grok-4-fast-think',
+    value: 'rovo-grok-4-fast-think',
     label: 'Grok 4 Fast Thinking',
     description: "xAI's previous fastest multimodel reasoning LLM",
     vision: true,
@@ -385,7 +385,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-code',
+    value: 'rovo-code',
     label: 'Grok Code',
     description: "xAI's advanced coding LLM",
     vision: false,
@@ -400,7 +400,7 @@ export const models: Model[] = [
     fast: true,
   },
   {
-    value: 'scira-qwen-32b',
+    value: 'rovo-qwen-32b',
     label: 'Qwen 3 32B',
     description: "Alibaba's base LLM",
     vision: false,
@@ -421,7 +421,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-qwen-32b-thinking',
+    value: 'rovo-qwen-32b-thinking',
     label: 'Qwen 3 32B Thinking',
     description: "Alibaba's base reasoning LLM",
     vision: false,
@@ -442,7 +442,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-qwen-4b',
+    value: 'rovo-qwen-4b',
     label: 'Qwen 3 4B',
     description: "Alibaba's small base LLM",
     vision: false,
@@ -462,7 +462,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-qwen-4b-thinking',
+    value: 'rovo-qwen-4b-thinking',
     label: 'Qwen 3 4B Thinking',
     description: "Alibaba's small base LLM",
     vision: false,
@@ -482,7 +482,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-gpt-oss-20',
+    value: 'rovo-gpt-oss-20',
     label: 'GPT OSS 20B',
     description: "OpenAI's small OSS LLM",
     vision: false,
@@ -497,7 +497,7 @@ export const models: Model[] = [
     fast: true,
   },
   {
-    value: 'scira-gpt5-nano',
+    value: 'rovo-gpt5-nano',
     label: 'GPT 5 Nano',
     description: "OpenAI's smallest flagship LLM",
     vision: true,
@@ -513,7 +513,7 @@ export const models: Model[] = [
     fast: true,
   },
   {
-    value: 'scira-google-lite',
+    value: 'rovo-google-lite',
     label: 'Gemini 2.5 Flash Lite',
     description: "Google's advanced small LLM",
     vision: true,
@@ -529,7 +529,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-ministral-3b',
+    value: 'rovo-ministral-3b',
     label: 'Ministral 3 3B',
     description: "Mistral's mini-model 3B multi-modal LLM",
     vision: true,
@@ -544,7 +544,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-ministral-8b',
+    value: 'rovo-ministral-8b',
     label: 'Ministral 3 8B',
     description: "Mistral's mini-model 8B multi-modal LLM",
     vision: true,
@@ -559,7 +559,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-devstral',
+    value: 'rovo-devstral',
     label: 'Devstral 2',
     description: "Mistral's coding-focused LLM",
     vision: false,
@@ -574,7 +574,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-devstral-small',
+    value: 'rovo-devstral-small',
     label: 'Devstral Small 2',
     description: "Mistral's small coding-focused LLM",
     vision: false,
@@ -589,7 +589,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-ministral-14b',
+    value: 'rovo-ministral-14b',
     label: 'Ministral 3 14B',
     description: "Mistral's mini-model 14B multi-modal LLM",
     vision: true,
@@ -604,7 +604,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-mistral-large',
+    value: 'rovo-mistral-large',
     label: 'Mistral Large 3',
     description: "Mistral's latest and greatest large multi-modal LLM",
     vision: true,
@@ -619,7 +619,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-mistral-medium',
+    value: 'rovo-mistral-medium',
     label: 'Mistral Medium',
     description: "Mistral's medium multi-modal LLM",
     vision: true,
@@ -634,7 +634,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-magistral-small',
+    value: 'rovo-magistral-small',
     label: 'Magistral Small',
     description: "Mistral's small reasoning LLM",
     vision: true,
@@ -649,7 +649,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-magistral-medium',
+    value: 'rovo-magistral-medium',
     label: 'Magistral Medium',
     description: "Mistral's medium reasoning LLM",
     vision: true,
@@ -664,7 +664,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-trinity-mini',
+    value: 'rovo-trinity-mini',
     label: 'Trinity Mini',
     description: "Arcee's small reasoning LLM",
     vision: false,
@@ -685,7 +685,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-gpt-oss-120',
+    value: 'rovo-gpt-oss-120',
     label: 'GPT OSS 120B',
     description: "OpenAI's advanced OSS LLM",
     vision: false,
@@ -700,7 +700,7 @@ export const models: Model[] = [
     fast: true,
   },
   {
-    value: 'scira-gpt-4.1-nano',
+    value: 'rovo-gpt-4.1-nano',
     label: 'GPT 4.1 Nano',
     description: "OpenAI's smallest LLM",
     vision: true,
@@ -716,7 +716,7 @@ export const models: Model[] = [
     fast: true,
   },
   {
-    value: 'scira-gpt-4.1-mini',
+    value: 'rovo-gpt-4.1-mini',
     label: 'GPT 4.1 Mini',
     description: "OpenAI's small LLM",
     vision: true,
@@ -732,7 +732,7 @@ export const models: Model[] = [
     experimental: false,
   },
   {
-    value: 'scira-gpt-4.1',
+    value: 'rovo-gpt-4.1',
     label: 'GPT 4.1',
     description: "OpenAI's LLM",
     vision: true,
@@ -749,7 +749,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt-5.1',
+    value: 'rovo-gpt-5.1',
     label: 'GPT 5.1 Instant',
     description: "OpenAI's fast and smart LLM",
     vision: true,
@@ -766,7 +766,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt-5.1-thinking',
+    value: 'rovo-gpt-5.1-thinking',
     label: 'GPT 5.1 Thinking',
     description: "OpenAI's recent and smart reasoning LLM",
     vision: true,
@@ -783,7 +783,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt-5.2',
+    value: 'rovo-gpt-5.2',
     label: 'GPT 5.2 Instant',
     description: "OpenAI's latest and greatest LLM",
     vision: true,
@@ -800,7 +800,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt-5.2-thinking',
+    value: 'rovo-gpt-5.2-thinking',
     label: 'GPT 5.2 Thinking',
     description: "OpenAI's latest and greatest reasoning LLM",
     vision: true,
@@ -817,7 +817,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt5-mini',
+    value: 'rovo-gpt5-mini',
     label: 'GPT 5 Mini',
     description: "OpenAI's small flagship LLM",
     vision: true,
@@ -834,7 +834,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt5',
+    value: 'rovo-gpt5',
     label: 'GPT 5',
     description: "OpenAI's flagship LLM",
     vision: true,
@@ -851,7 +851,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-o4-mini',
+    value: 'rovo-o4-mini',
     label: 'o4 mini',
     description: "OpenAI's recent mini reasoning LLM",
     vision: true,
@@ -867,7 +867,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-o3',
+    value: 'rovo-o3',
     label: 'o3',
     description: "OpenAI's advanced LLM",
     vision: true,
@@ -883,7 +883,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt5-medium',
+    value: 'rovo-gpt5-medium',
     label: 'GPT 5 Medium',
     description: "OpenAI's latest flagship reasoning LLM",
     vision: true,
@@ -900,7 +900,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt-5.1-codex',
+    value: 'rovo-gpt-5.1-codex',
     label: 'GPT 5.1 Codex',
     description: "OpenAI's advanced coding LLM",
     vision: true,
@@ -917,7 +917,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt-5.1-codex-mini',
+    value: 'rovo-gpt-5.1-codex-mini',
     label: 'GPT 5.1 Codex Mini',
     description: "OpenAI's advanced coding LLM",
     vision: true,
@@ -934,7 +934,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt-5.1-codex-max',
+    value: 'rovo-gpt-5.1-codex-max',
     label: 'GPT 5.1 Codex Max',
     description: "OpenAI's advanced coding LLM",
     vision: true,
@@ -951,7 +951,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gpt5-codex',
+    value: 'rovo-gpt5-codex',
     label: 'GPT 5 Codex',
     description: "OpenAI's advanced coding LLM",
     vision: true,
@@ -968,7 +968,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-cmd-a',
+    value: 'rovo-cmd-a',
     label: 'Command A',
     description: "Cohere's advanced command LLM",
     vision: false,
@@ -983,7 +983,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-cmd-a-think',
+    value: 'rovo-cmd-a-think',
     label: 'Command A Thinking',
     description: "Cohere's advanced command LLM with thinking",
     vision: false,
@@ -998,7 +998,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-kat-coder',
+    value: 'rovo-kat-coder',
     label: 'KAT-Coder-Pro V1',
     description: "Kwaipilot's advanced coding LLM",
     vision: false,
@@ -1013,7 +1013,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-deepseek-v3',
+    value: 'rovo-deepseek-v3',
     label: 'DeepSeek v3',
     description: "DeepSeek's previous advanced chat LLM",
     vision: false,
@@ -1034,7 +1034,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-deepseek-v3.1-terminus',
+    value: 'rovo-deepseek-v3.1-terminus',
     label: 'DeepSeek v3.1 Terminus',
     description: "DeepSeek's advanced chat LLM",
     vision: false,
@@ -1055,7 +1055,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-deepseek-chat',
+    value: 'rovo-deepseek-chat',
     label: 'DeepSeek v3.2',
     description: "DeepSeek's advanced chat LLM",
     vision: false,
@@ -1074,7 +1074,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-deepseek-chat-think',
+    value: 'rovo-deepseek-chat-think',
     label: 'DeepSeek v3.2 Thinking',
     description: "DeepSeek's advanced chat LLM with thinking",
     vision: false,
@@ -1089,7 +1089,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-deepseek-chat-exp',
+    value: 'rovo-deepseek-chat-exp',
     label: 'DeepSeek v3.2 Exp',
     description: "DeepSeek's advanced chat LLM",
     vision: false,
@@ -1104,7 +1104,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-deepseek-chat-think-exp',
+    value: 'rovo-deepseek-chat-think-exp',
     label: 'DeepSeek v3.2 Exp Thinking',
     description: "DeepSeek's advanced chat LLM with thinking",
     vision: false,
@@ -1119,7 +1119,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-deepseek-r1',
+    value: 'rovo-deepseek-r1',
     label: 'DeepSeek R1',
     description: "DeepSeek's advanced reasoning LLM",
     vision: false,
@@ -1134,7 +1134,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-deepseek-r1-0528',
+    value: 'rovo-deepseek-r1-0528',
     label: 'DeepSeek R1 0528',
     description: "DeepSeek's advanced reasoning LLM",
     vision: false,
@@ -1149,7 +1149,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-qwen-coder-small',
+    value: 'rovo-qwen-coder-small',
     label: 'Qwen 3 Coder 30B A3B Instruct',
     description: "Alibaba's advanced coding LLM",
     vision: false,
@@ -1171,7 +1171,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-qwen-coder',
+    value: 'rovo-qwen-coder',
     label: 'Qwen 3 Coder',
     description: "Alibaba's advanced coding LLM",
     vision: false,
@@ -1186,7 +1186,7 @@ export const models: Model[] = [
     fast: true,
   },
   {
-    value: 'scira-qwen-coder-plus',
+    value: 'rovo-qwen-coder-plus',
     label: 'Qwen 3 Coder Plus',
     description: "Alibaba's extremely advanced coding LLM",
     vision: false,
@@ -1201,7 +1201,7 @@ export const models: Model[] = [
     fast: false,
   },
   {
-    value: 'scira-qwen-3-vl-30b',
+    value: 'rovo-qwen-3-vl-30b',
     label: 'Qwen 3 VL 30B',
     description: "Alibaba's advanced vision LLM",
     vision: true,
@@ -1222,7 +1222,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-qwen-3-vl-30b-thinking',
+    value: 'rovo-qwen-3-vl-30b-thinking',
     label: 'Qwen 3 VL 30B Thinking',
     description: "Alibaba's advanced vision LLM with thinking",
     vision: true,
@@ -1244,7 +1244,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-qwen-3-next',
+    value: 'rovo-qwen-3-next',
     label: 'Qwen 3 Next 80B A3B Instruct',
     description: "Qwen's advanced instruct LLM",
     vision: false,
@@ -1265,7 +1265,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-qwen-3-next-think',
+    value: 'rovo-qwen-3-next-think',
     label: 'Qwen 3 Next 80B A3B Thinking',
     description: "Qwen's advanced thinking LLM",
     vision: false,
@@ -1285,7 +1285,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-qwen-3-max',
+    value: 'rovo-qwen-3-max',
     label: 'Qwen 3 Max',
     description: "Qwen's advanced instruct LLM",
     vision: false,
@@ -1300,7 +1300,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-qwen-3-max-preview',
+    value: 'rovo-qwen-3-max-preview',
     label: 'Qwen 3 Max Preview',
     description: "Qwen's advanced instruct LLM",
     vision: false,
@@ -1315,7 +1315,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-qwen-235',
+    value: 'rovo-qwen-235',
     label: 'Qwen 3 235B A22B',
     description: "Qwen's advanced instruct LLM",
     vision: false,
@@ -1334,7 +1334,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-qwen-235-think',
+    value: 'rovo-qwen-235-think',
     label: 'Qwen 3 235B A22B Thinking',
     description: "Qwen's advanced thinking LLM",
     vision: false,
@@ -1353,7 +1353,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-qwen-3-vl',
+    value: 'rovo-qwen-3-vl',
     label: 'Qwen 3 VL 235B A22B Instruct',
     description: "Qwen's advanced vision LLM with thinking",
     vision: true,
@@ -1373,7 +1373,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-qwen-3-vl-thinking',
+    value: 'rovo-qwen-3-vl-thinking',
     label: 'Qwen 3 VL 235B A22B Thinking',
     description: "Qwen's advanced vision LLM with thinking",
     vision: true,
@@ -1393,7 +1393,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-kimi-k2-v2',
+    value: 'rovo-kimi-k2-v2',
     label: 'Kimi K2 Latest',
     description: "MoonShot AI's advanced base LLM",
     vision: false,
@@ -1411,7 +1411,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-kimi-k2-v2-thinking',
+    value: 'rovo-kimi-k2-v2-thinking',
     label: 'Kimi K2 Thinking',
     description: "MoonShot AI's advanced base LLM with thinking",
     vision: false,
@@ -1432,7 +1432,7 @@ export const models: Model[] = [
   // sherlock experimental models
 
   {
-    value: 'scira-minimax',
+    value: 'rovo-minimax',
     label: 'Minimax M1 80K',
     description: "Minimax's advanced reasoning LLM",
     vision: false,
@@ -1450,7 +1450,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-minimax-m2',
+    value: 'rovo-minimax-m2',
     label: 'Minimax M2',
     description: "Minimax's advanced reasoning LLM",
     vision: false,
@@ -1470,7 +1470,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-minimax-m2.1',
+    value: 'rovo-minimax-m2.1',
     label: 'Minimax M2.1',
     description: "Minimax's latest advanced reasoning LLM",
     vision: false,
@@ -1490,7 +1490,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-minimax-m2.1-lightning',
+    value: 'rovo-minimax-m2.1-lightning',
     label: 'Minimax M2.1 Lightning',
     description: "Minimax's fast advanced reasoning LLM",
     vision: false,
@@ -1511,7 +1511,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-glm-4.6',
+    value: 'rovo-glm-4.6',
     label: 'GLM 4.6',
     description: "Zhipu AI's advanced reasoning LLM",
     vision: false,
@@ -1531,7 +1531,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-glm-4.6v-flash',
+    value: 'rovo-glm-4.6v-flash',
     label: 'GLM 4.6V Flash',
     description: "Zhipu AI's fast vision reasoning LLM",
     vision: true,
@@ -1553,7 +1553,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-glm-4.6v',
+    value: 'rovo-glm-4.6v',
     label: 'GLM 4.6V',
     description: "Zhipu AI's advanced vision reasoning LLM",
     vision: true,
@@ -1574,7 +1574,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-glm-4.7',
+    value: 'rovo-glm-4.7',
     label: 'GLM 4.7',
     description: "Zhipu AI's latest advanced reasoning LLM",
     vision: false,
@@ -1594,7 +1594,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-glm-air',
+    value: 'rovo-glm-air',
     label: 'GLM 4.5 Air',
     description: "Zhipu AI's efficient base LLM",
     vision: false,
@@ -1612,7 +1612,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-glm',
+    value: 'rovo-glm',
     label: 'GLM 4.5',
     description: "Zhipu AI's previous advanced LLM",
     vision: false,
@@ -1630,7 +1630,7 @@ export const models: Model[] = [
     },
   },
   {
-    value: 'scira-google',
+    value: 'rovo-google',
     label: 'Gemini 2.5 Flash',
     description: "Google's advanced small LLM",
     vision: true,
@@ -1646,7 +1646,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-google-think',
+    value: 'rovo-google-think',
     label: 'Gemini 2.5 Flash Thinking',
     description: "Google's advanced small LLM with thinking",
     vision: true,
@@ -1662,7 +1662,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-google-pro',
+    value: 'rovo-google-pro',
     label: 'Gemini 2.5 Pro',
     description: "Google's advanced LLM",
     vision: true,
@@ -1678,7 +1678,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-google-pro-think',
+    value: 'rovo-google-pro-think',
     label: 'Gemini 2.5 Pro Thinking',
     description: "Google's advanced LLM with thinking",
     vision: true,
@@ -1694,7 +1694,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gemini-3-flash',
+    value: 'rovo-gemini-3-flash',
     label: 'Gemini 3 Flash',
     description: "Google's latest small SOTA LLM",
     vision: true,
@@ -1710,7 +1710,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gemini-3-flash-think',
+    value: 'rovo-gemini-3-flash-think',
     label: 'Gemini 3 Flash Thinking',
     description: "Google's latest small SOTA LLM with thinking",
     vision: true,
@@ -1726,7 +1726,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-gemini-3-pro',
+    value: 'rovo-gemini-3-pro',
     label: 'Gemini 3 Pro',
     description: "Google's latest SOTA LLM",
     vision: true,
@@ -1742,7 +1742,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-anthropic-small',
+    value: 'rovo-anthropic-small',
     label: 'Claude Haiku 4.5',
     description: "Anthropic's fast and efficient LLM",
     vision: true,
@@ -1757,7 +1757,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-anthropic',
+    value: 'rovo-anthropic',
     label: 'Claude Sonnet 4.5',
     description: "Anthropic's latest and greatest LLM",
     vision: true,
@@ -1772,7 +1772,7 @@ export const models: Model[] = [
     isNew: false,
   },
   {
-    value: 'scira-anthropic-think',
+    value: 'rovo-anthropic-think',
     label: 'Claude Sonnet 4.5 Thinking',
     description: "Anthropic's latest and greatest LLM with thinking",
     vision: true,
@@ -1787,7 +1787,7 @@ export const models: Model[] = [
     isNew: false,
   },
   {
-    value: 'scira-anthropic-opus',
+    value: 'rovo-anthropic-opus',
     label: 'Claude 4.5 Opus',
     description: "Anthropic's latest and greatest LLM",
     vision: true,
@@ -1802,7 +1802,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-anthropic-opus-think',
+    value: 'rovo-anthropic-opus-think',
     label: 'Claude 4.5 Opus Thinking',
     description: "Anthropic's latest and greatest LLM with thinking",
     vision: true,
@@ -1817,7 +1817,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-mimo-v2-flash',
+    value: 'rovo-mimo-v2-flash',
     label: 'Mimo V2 Flash',
     description: "Xiaomi's fast Mimo V2 Flash model via OpenRouter (thinking disabled)",
     vision: false,
@@ -1832,7 +1832,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-nova-2-lite',
+    value: 'rovo-nova-2-lite',
     label: 'Nova 2 Lite',
     description: "Amazon's latest and smallest LLM",
     vision: false,
@@ -1847,7 +1847,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-v0-10',
+    value: 'rovo-v0-10',
     label: 'Vercel v0 1.0',
     description: "Vercel's v0 1.0 model",
     vision: true,
@@ -1862,7 +1862,7 @@ export const models: Model[] = [
     isNew: true,
   },
   {
-    value: 'scira-v0-15',
+    value: 'rovo-v0-15',
     label: 'Vercel v0 1.5',
     description: "Vercel's v0 1.5 model",
     vision: true,
@@ -1981,32 +1981,32 @@ const RESTRICTED_REGIONS = ['CN', 'KP', 'RU']; // China, North Korea, Russia
 
 // Models that should be filtered in restricted regions
 const OPENAI_MODELS = [
-  'scira-gpt-4.1',
-  'scira-gpt-4.1-mini',
-  'scira-gpt-4.1-nano',
-  'scira-gpt5',
-  'scira-gpt5-mini',
-  'scira-gpt5-nano',
-  'scira-gpt5-medium',
-  'scira-gpt5-codex',
-  'scira-gpt-5.1',
-  'scira-gpt-5.1-codex',
-  'scira-gpt-5.1-codex-mini',
-  'scira-gpt-5.1-codex-max',
-  'scira-gpt-5.1-thinking',
-  'scira-gpt-5.2',
-  'scira-gpt-5.2-thinking',
-  'scira-o3',
-  'scira-o4-mini',
+  'rovo-gpt-4.1',
+  'rovo-gpt-4.1-mini',
+  'rovo-gpt-4.1-nano',
+  'rovo-gpt5',
+  'rovo-gpt5-mini',
+  'rovo-gpt5-nano',
+  'rovo-gpt5-medium',
+  'rovo-gpt5-codex',
+  'rovo-gpt-5.1',
+  'rovo-gpt-5.1-codex',
+  'rovo-gpt-5.1-codex-mini',
+  'rovo-gpt-5.1-codex-max',
+  'rovo-gpt-5.1-thinking',
+  'rovo-gpt-5.2',
+  'rovo-gpt-5.2-thinking',
+  'rovo-o3',
+  'rovo-o4-mini',
 ];
 
 const ANTHROPIC_MODELS = [
-  'scira-haiku',
-  'scira-anthropic-small',
-  'scira-anthropic',
-  'scira-anthropic-think',
-  'scira-anthropic-opus',
-  'scira-anthropic-opus-think',
+  'rovo-haiku',
+  'rovo-anthropic-small',
+  'rovo-anthropic',
+  'rovo-anthropic-think',
+  'rovo-anthropic-opus',
+  'rovo-anthropic-opus-think',
 ];
 
 // Check if a model should be filtered based on region

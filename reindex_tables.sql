@@ -1,4 +1,4 @@
--- Reindex All Tables for scira
+-- Reindex All Tables for rovo
 -- This file drops and recreates all indexes for optimal performance
 -- Safe to run - uses IF EXISTS and CONCURRENTLY where possible
 

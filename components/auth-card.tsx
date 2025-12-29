@@ -1,6 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { authClient, signIn } from '@/lib/auth-client';
 import { Loader2 } from 'lucide-react';
@@ -180,7 +179,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           <p className="text-sm text-center text-muted-foreground">
             {mode === 'sign-in' ? (
               <>
-                New to Scira?{' '}
+                New to Rovo?{' '}
                 <Link href="/sign-up" className="text-foreground font-medium hover:underline underline-offset-4">
                   Create account
                 </Link>

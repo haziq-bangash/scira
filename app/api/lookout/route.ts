@@ -1,7 +1,7 @@
 // /app/api/lookout/route.ts
 import { generateTitleFromUserMessage } from '@/app/actions';
 import { convertToModelMessages, streamText, createUIMessageStream, stepCountIs, JsonToSseTransformStream } from 'ai';
-import { scira } from '@/ai/providers';
+import { rovo } from '@/ai/providers';
 import {
   createStreamId,
   saveChat,
@@ -168,7 +168,7 @@ export async function POST(req: Request) {
             parts: userMessage.parts,
             attachments: [],
             createdAt: new Date(),
-            model: 'scira-grok-4-fast-think',
+            model: 'rovo-grok-4-fast-think',
             completionTime: null,
             inputTokens: null,
             outputTokens: null,
@@ -192,12 +192,12 @@ export async function POST(req: Request) {
 
         // Start streaming
         const result = streamText({
-          model: scira.languageModel('scira-grok-4-fast-think'),
+          model: rovo.languageModel('rovo-grok-4-fast-think'),
           messages: await convertToModelMessages([userMessage]),
           stopWhen: stepCountIs(2),
           maxRetries: 10,
           activeTools: ['extreme_search'],
-          system: `# Scira AI Scheduled Research Assistant
+          system: `# Rovo AI Scheduled Research Assistant
 
 You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a 3-page research paper format.
 
@@ -585,7 +585,7 @@ $$
                 console.log('Finish part: ', part);
                 const processingTime = (Date.now() - streamStartTime) / 1000;
                 return {
-                  model: 'scira-grok-4-fast-think',
+                  model: 'rovo-grok-4-fast-think',
                   completionTime: processingTime,
                   createdAt: new Date().toISOString(),
                   totalTokens: part.totalUsage?.totalTokens ?? null,
@@ -616,7 +616,7 @@ $$
                 createdAt: new Date(),
                 attachments: [],
                 chatId: chatId,
-                model: 'scira-grok-4-fast-think',
+                model: 'rovo-grok-4-fast-think',
                 completionTime: message.metadata?.completionTime ?? 0,
                 inputTokens: message.metadata?.inputTokens ?? 0,
                 outputTokens: message.metadata?.outputTokens ?? 0,

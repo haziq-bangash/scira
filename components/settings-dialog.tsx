@@ -63,7 +63,7 @@ import { models } from '@/ai/providers';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useIsProUser } from '@/contexts/user-context';
-import { SciraLogo } from './logos/scira-logo';
+import { RovoLogo } from './logos/rovo-logo';
 import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { HugeiconsIcon } from '@/components/ui/hugeicons';
@@ -346,17 +346,17 @@ export function PreferencesSection({
 }) {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [searchProvider, setSearchProvider] = useSyncedPreferences<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
-    'scira-search-provider',
+    'rovo-search-provider',
     'exa',
   );
 
   const [extremeSearchProvider, setExtremeSearchProvider] = useSyncedPreferences<'exa' | 'parallel'>(
-    'scira-extreme-search-provider',
+    'rovo-extreme-search-provider',
     'exa',
   );
 
   const [locationMetadataEnabled, setLocationMetadataEnabled] = useSyncedPreferences<boolean>(
-    'scira-location-metadata-enabled',
+    'rovo-location-metadata-enabled',
     false,
   );
 
@@ -366,7 +366,7 @@ export function PreferencesSection({
   // Reorder state: groups and models
   const dynamicGroups = useMemo(() => getSearchGroups(searchProvider), [searchProvider]);
   const [groupOrder, setGroupOrder] = useSyncedPreferences<SearchGroupId[]>(
-    'scira-group-order',
+    'rovo-group-order',
     dynamicGroups.map((g) => g.id),
   );
   const mergedGroupOrder = useMemo(() => {
@@ -377,7 +377,7 @@ export function PreferencesSection({
   }, [dynamicGroups, groupOrder]);
 
   const allModelIds = useMemo(() => models.map((m) => m.value), []);
-  const [globalModelOrder, setGlobalModelOrder] = useSyncedPreferences<string[]>('scira-model-order-global', allModelIds);
+  const [globalModelOrder, setGlobalModelOrder] = useSyncedPreferences<string[]>('rovo-model-order-global', allModelIds);
   const mergedModelOrder = useMemo(() => {
     const validSet = new Set(allModelIds);
     const base = (globalModelOrder && globalModelOrder.length > 0 ? globalModelOrder : []).filter((id) =>
@@ -1300,7 +1300,7 @@ export function SubscriptionSection({ subscriptionData, isProUser, user }: any) 
       console.error('Subscription management error:', error);
 
       if (proSource === 'dodo') {
-        toast.error('Unable to access DodoPayments portal. Please contact support at zaid@scira.ai');
+        toast.error('Unable to access DodoPayments portal. Please contact support at zaid@rovo.ai');
       } else {
         toast.error('Failed to open subscription management');
       }
@@ -1507,7 +1507,7 @@ export function SubscriptionSection({ subscriptionData, isProUser, user }: any) 
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
                             <p className={cn('font-medium truncate', isMobile ? 'text-xs' : 'text-sm')}>
-                              Scira Pro (DodoPayments)
+                              Rovo Pro (DodoPayments)
                             </p>
                             <div className="flex items-center gap-2">
                               <p className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>
@@ -2273,7 +2273,7 @@ export function SettingsDialog({
             {/* Header - more compact */}
             <DrawerHeader className="pb-2 px-4 pt-3 shrink-0">
               <DrawerTitle className="text-base font-medium flex items-center gap-2">
-                <SciraLogo className="size-6" />
+                <RovoLogo className="size-6" />
                 Settings
               </DrawerTitle>
             </DrawerHeader>
@@ -2335,7 +2335,7 @@ export function SettingsDialog({
       <DialogContent className="max-w-4xl! w-full! max-h-[85vh] p-0! gap-0 overflow-hidden">
         <DialogHeader className="p-4 m-0!">
           <DialogTitle className="text-xl font-medium tracking-normal flex items-center gap-2">
-            <SciraLogo className="size-6" color="currentColor" />
+            <RovoLogo className="size-6" color="currentColor" />
             Settings
           </DialogTitle>
         </DialogHeader>

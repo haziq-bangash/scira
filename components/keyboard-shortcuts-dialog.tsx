@@ -180,7 +180,7 @@ export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcut
             <Kbd className="text-sm">⌘</Kbd>
             Keyboard Shortcuts
           </DialogTitle>
-          <DialogDescription>All available keyboard shortcuts and hotkeys in Scira</DialogDescription>
+          <DialogDescription>All available keyboard shortcuts and hotkeys in Rovo</DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-[60vh] pr-4">

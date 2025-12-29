@@ -489,7 +489,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             }
 
                             const payload = {
-                              title: 'Scira AI',
+                              title: 'Rovo AI',
                               content,
                               meta: {
                                 modelLabel: modelLabel || null,
@@ -510,7 +510,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            a.download = `scira-export-${message.id || Date.now()}.pdf`;
+                            a.download = `rovo-export-${message.id || Date.now()}.pdf`;
                             document.body.appendChild(a);
                             a.click();
                             a.remove();
@@ -573,7 +573,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            a.download = `scira-export-${message.id || Date.now()}.md`;
+                            a.download = `rovo-export-${message.id || Date.now()}.md`;
                             document.body.appendChild(a);
                             a.click();
                             a.remove();

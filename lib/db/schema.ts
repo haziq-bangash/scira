@@ -202,13 +202,13 @@ export const userPreferences = pgTable('user_preferences', {
     .references(() => user.id, { onDelete: 'cascade' }),
   preferences: json('preferences')
     .$type<{
-      'scira-search-provider'?: 'exa' | 'parallel' | 'tavily' | 'firecrawl';
-      'scira-extreme-search-provider'?: 'exa' | 'parallel';
-      'scira-group-order'?: string[];
-      'scira-model-order-global'?: string[];
-      'scira-blur-personal-info'?: boolean;
-      'scira-custom-instructions-enabled'?: boolean;
-      'scira-location-metadata-enabled'?: boolean;
+      'rovo-search-provider'?: 'exa' | 'parallel' | 'tavily' | 'firecrawl';
+      'rovo-extreme-search-provider'?: 'exa' | 'parallel';
+      'rovo-group-order'?: string[];
+      'rovo-model-order-global'?: string[];
+      'rovo-blur-personal-info'?: boolean;
+      'rovo-custom-instructions-enabled'?: boolean;
+      'rovo-location-metadata-enabled'?: boolean;
     }>()
     .notNull()
     .default({}),

@@ -6,18 +6,18 @@ import { getUserPreferences, saveUserPreferences } from '@/app/actions';
 import { useUser } from '@/contexts/user-context';
 
 type PreferenceKey =
-  | 'scira-search-provider'
-  | 'scira-extreme-search-provider'
-  | 'scira-group-order'
-  | 'scira-model-order-global'
-  | 'scira-blur-personal-info'
-  | 'scira-custom-instructions-enabled'
-  | 'scira-location-metadata-enabled';
+  | 'rovo-search-provider'
+  | 'rovo-extreme-search-provider'
+  | 'rovo-group-order'
+  | 'rovo-model-order-global'
+  | 'rovo-blur-personal-info'
+  | 'rovo-custom-instructions-enabled'
+  | 'rovo-location-metadata-enabled';
 
 type PreferenceValue = string | string[] | boolean | undefined;
 
 const DEBOUNCE_MS = 300; // Debounce DB writes by 300ms
-const MIGRATION_KEY_PREFIX = 'scira-prefs-migrated-';
+const MIGRATION_KEY_PREFIX = 'rovo-prefs-migrated-';
 
 // Get the initial value from localStorage synchronously
 function getStoredValue<T>(key: string, defaultValue: T): T {
@@ -54,13 +54,13 @@ function collectLocalStoragePreferences(): Partial<Record<PreferenceKey, Prefere
   const preferences: Partial<Record<PreferenceKey, PreferenceValue>> = {};
 
   const keys: PreferenceKey[] = [
-    'scira-search-provider',
-    'scira-extreme-search-provider',
-    'scira-group-order',
-    'scira-model-order-global',
-    'scira-blur-personal-info',
-    'scira-custom-instructions-enabled',
-    'scira-location-metadata-enabled',
+    'rovo-search-provider',
+    'rovo-extreme-search-provider',
+    'rovo-group-order',
+    'rovo-model-order-global',
+    'rovo-blur-personal-info',
+    'rovo-custom-instructions-enabled',
+    'rovo-location-metadata-enabled',
   ];
 
   keys.forEach((key) => {

@@ -89,7 +89,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
           <div className="relative h-80 overflow-hidden rounded-t-lg">
             <Image
               src="/placeholder.png"
-              alt="Scira Pro"
+              alt="Rovo Pro"
               width={1200}
               height={630}
               className="w-full h-full object-cover"
@@ -105,7 +105,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
               </div>
               <DialogTitle className="flex items-center gap-3 text-white mb-2">
                 <span className="text-4xl font-medium flex items-center gap-2 font-be-vietnam-pro">
-                  scira
+                  rovo
                   <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-light text-xl !tracking-normal" />
                 </span>
               </DialogTitle>
@@ -154,7 +154,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
           <div className="flex items-center gap-4">
             <CheckIcon className="size-4 text-primary flex-shrink-0" />
             <div className="space-y-1">
-              <p className="text-sm font-medium text-foreground">Scira Lookout</p>
+              <p className="text-sm font-medium text-foreground">Rovo Lookout</p>
               <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
             </div>
           </div>
@@ -249,7 +249,7 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
           <div className="relative h-40 sm:h-48 overflow-hidden rounded-t-lg">
             <Image
               src="/lookout-promo.png"
-              alt="Scira Lookout"
+              alt="Rovo Lookout"
               width={1200}
               height={630}
               className="w-full h-full object-cover"
@@ -260,7 +260,7 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
                 New Feature
               </div>
               <DialogTitle className="text-white text-xl sm:text-2xl font-bold tracking-tight">
-                Introducing Scira Lookout
+                Introducing Rovo Lookout
               </DialogTitle>
               <DialogDescription className="text-white/80 text-sm mt-1">
                 Automated search monitoring on your schedule

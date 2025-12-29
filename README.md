@@ -1,4 +1,4 @@
-# Scira
+# Rovo
 
 A minimalistic AI-powered search engine that helps you find information on the internet.
 
@@ -8,13 +8,13 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 <br />
 
-![Scira](/app/opengraph-image.png)
+![Rovo](/app/opengraph-image.png)
 
 <br />
 
-🔗 **[Try Scira at scira.ai](https://scira.ai)**
+🔗 **[Try Rovo at rovo.ai](https://rovo.ai)**
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/zaidmukaddam/scira)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/zaidmukaddam/rovo)
 
 ## Powered By
 
@@ -31,12 +31,12 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 <div align="center" markdown="1">
 
-[![Warp](https://github.com/user-attachments/assets/2bda420d-4211-4900-a37e-e3c7056d799c)](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)<br>
+[![Warp](https://github.com/user-attachments/assets/2bda420d-4211-4900-a37e-e3c7056d799c)](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rovo)<br>
 
-### **[Warp, the intelligent terminal](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)**<br>
+### **[Warp, the intelligent terminal](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rovo)**<br>
 
-[Available for MacOS, Linux, & Windows](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)<br>
-[Visit warp.dev to learn more](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=scira)
+[Available for MacOS, Linux, & Windows](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rovo)<br>
+[Visit warp.dev to learn more](https://www.warp.dev/?utm_source=github&utm_medium=referral&utm_campaign=rovo)
 
 </div>
 
@@ -122,9 +122,9 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 ### Deploy your own
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,SUPADATA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY,SCIRA_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Frovo&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,SUPADATA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY,SCIRA_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Rovo%20to%20function)
 
-## Set Scira as your default search engine
+## Set Rovo as your default search engine
 
 1. **Open the Chrome browser settings**:
    - Click on the three vertical dots in the upper right corner of the browser.
@@ -138,10 +138,10 @@ A minimalistic AI-powered search engine that helps you find information on the i
    - Click on "Add" next to "Site search."
 
 4. **Set the search engine name**:
-   - Enter `Scira` in the "Search engine" field.
+   - Enter `Rovo` in the "Search engine" field.
 
 5. **Set the search engine URL**:
-   - Enter `https://scira.ai?q=%s` in the "URL with %s in place of query" field.
+   - Enter `https://rovo.ai?q=%s` in the "URL with %s in place of query" field.
 
 6. **Set the search engine shortcut**:
    - Enter `sh` in the "Shortcut" field.
@@ -150,7 +150,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
    - Click on the three dots next to the search engine you just added.
    - Select "Make default" from the dropdown menu.
 
-After completing these steps, you should be able to use Scira as your default search engine in Chrome.
+After completing these steps, you should be able to use Rovo as your default search engine in Chrome.
 
 ### Local development
 
@@ -173,11 +173,11 @@ The application can be run using Docker in two ways:
 1. Create a `.env` file based on `.env.example` with your API keys
 2. Build the Docker image:
    ```bash
-   docker build -t scira.app .
+   docker build -t rovo.app .
    ```
 3. Run the container:
    ```bash
-   docker run --env-file .env -p 3000:3000 scira.app
+   docker run --env-file .env -p 3000:3000 rovo.app
    ```
 
 The application uses a multi-stage build process to minimize the final image size and implements security best practices. The production image runs on Node.js LTS with Alpine Linux for a minimal footprint.

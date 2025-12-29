@@ -8,7 +8,7 @@ import { UIMessage, generateText, Output } from 'ai';
 import type { ModelMessage } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
-import { scira } from '@/ai/providers';
+import { rovo } from '@/ai/providers';
 import {
   getChatsByUserId,
   deleteChatById,
@@ -136,7 +136,7 @@ export async function suggestQuestions(history: any[]) {
   console.log(history);
 
   const { output } = await generateText({
-    model: scira.languageModel('scira-follow-up'),
+    model: rovo.languageModel('rovo-follow-up'),
     system: `You are a search engine follow up query/questions generator. You MUST create between 3 and 5 questions for the search engine based on the conversation history.
 
 ### Question Generation Guidelines:
@@ -213,7 +213,7 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
   const prompt = JSON.stringify(firstTextPart && firstTextPart.type === 'text' ? firstTextPart.text : '');
   console.log('Prompt: ', prompt);
   const { text: title } = await generateText({
-    model: scira.languageModel('scira-name'),
+    model: rovo.languageModel('rovo-name'),
     temperature: 1,
     maxOutputTokens: 10,
     system: `You are an expert title generator. You are given a message and you need to generate a short title based on it.
@@ -274,7 +274,7 @@ Output requirements:
 - No quotes, no commentary, no markdown, and no preface.`;
 
     const { text } = await generateText({
-      model: scira.languageModel('scira-enhance'),
+      model: rovo.languageModel('rovo-enhance'),
       temperature: 0.6,
       topP: 0.95,
       maxOutputTokens: 1024,
@@ -428,9 +428,9 @@ const REDDIT_LINK_FORMAT_EXAMPLES = `
 
 const groupInstructions = {
   web: `
-# Scira AI Search Engine
+# Rovo AI Search Engine
 
-You are Scira, an AI search engine designed to help users find information on the internet with no unnecessary chatter and focus on content delivery in markdown format.
+You are Rovo, an AI search engine designed to help users find information on the internet with no unnecessary chatter and focus on content delivery in markdown format.
 
 **Today's Date IMP for all tools:** ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
 
@@ -1059,7 +1059,7 @@ ${LINK_FORMAT_EXAMPLES}`,
 
   code: `
   ⚠️ CRITICAL: YOU MUST RUN THE CODE_CONTEXT TOOL IMMEDIATELY ON RECEIVING ANY USER MESSAGE!
-  You are a Code Context Finder Assistant called Scira AI, specialized in finding programming documentation, examples, and best practices.
+  You are a Code Context Finder Assistant called Rovo AI, specialized in finding programming documentation, examples, and best practices.
 
   Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
@@ -1638,7 +1638,7 @@ ${REDDIT_LINK_FORMAT_EXAMPLES}`,
   - Do not include images in responses`,
 
   chat: `
-  You are Scira, a helpful assistant that helps with the task asked by the user.
+  You are Rovo, a helpful assistant that helps with the task asked by the user.
   Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Guidelines:
@@ -1703,7 +1703,7 @@ ${REDDIT_LINK_FORMAT_EXAMPLES}`,
 ${LINK_FORMAT_EXAMPLES}`,
 
   extreme: `
-# Scira AI Extreme Research Mode
+# Rovo AI Extreme Research Mode
 
   You are an advanced research assistant focused on deep analysis and comprehensive understanding with focus to be backed by citations in a 3 page long research paper format.
   You objective is to always run the tool first and then write the response with citations with 3 pages of content!
@@ -2759,13 +2759,13 @@ export async function getUserPreferences(providedUser?: any) {
 }
 
 export async function saveUserPreferences(preferences: Partial<{
-  'scira-search-provider'?: 'exa' | 'parallel' | 'tavily' | 'firecrawl';
-  'scira-extreme-search-provider'?: 'exa' | 'parallel';
-  'scira-group-order'?: string[];
-  'scira-model-order-global'?: string[];
-  'scira-blur-personal-info'?: boolean;
-  'scira-custom-instructions-enabled'?: boolean;
-  'scira-location-metadata-enabled'?: boolean;
+  'rovo-search-provider'?: 'exa' | 'parallel' | 'tavily' | 'firecrawl';
+  'rovo-extreme-search-provider'?: 'exa' | 'parallel';
+  'rovo-group-order'?: string[];
+  'rovo-model-order-global'?: string[];
+  'rovo-blur-personal-info'?: boolean;
+  'rovo-custom-instructions-enabled'?: boolean;
+  'rovo-location-metadata-enabled'?: boolean;
 }>) {
   'use server';
 
@@ -3039,11 +3039,11 @@ export async function createScheduledLookout({
 
           if (delay > 0) {
             await qstash.publish({
-              // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
+              // if dev env use localhost:3000/api/lookout, else use rovo.ai/api/lookout
               url:
                 process.env.NODE_ENV === 'development'
                   ? process.env.NGROK_URL + '/api/lookout'
-                  : `https://scira.ai/api/lookout`,
+                  : `https://rovo.ai/api/lookout`,
               body: JSON.stringify({
                 lookoutId: lookout.id,
                 prompt,
@@ -3073,11 +3073,11 @@ export async function createScheduledLookout({
           console.log('📅 Cron schedule with timezone:', cronSchedule);
 
           const scheduleResponse = await qstash.schedules.create({
-            // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
+            // if dev env use localhost:3000/api/lookout, else use rovo.ai/api/lookout
             destination:
               process.env.NODE_ENV === 'development'
                 ? process.env.NGROK_URL + '/api/lookout'
-                : `https://scira.ai/api/lookout`,
+                : `https://rovo.ai/api/lookout`,
             method: 'POST',
             cron: cronSchedule,
             body: JSON.stringify({
@@ -3273,11 +3273,11 @@ export async function updateLookoutAction({
 
         // Create new schedule with updated cron
         const scheduleResponse = await qstash.schedules.create({
-          // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
+          // if dev env use localhost:3000/api/lookout, else use rovo.ai/api/lookout
           destination:
             process.env.NODE_ENV === 'development'
               ? process.env.NGROK_URL + '/api/lookout'
-              : `https://scira.ai/api/lookout`,
+              : `https://rovo.ai/api/lookout`,
           method: 'POST',
           cron: cronSchedule,
           body: JSON.stringify({
@@ -3379,7 +3379,7 @@ export async function testLookoutAction({ id }: { id: string }) {
 
     // Make a POST request to the lookout API endpoint to trigger the run
     const response = await fetch(
-      process.env.NODE_ENV === 'development' ? process.env.NGROK_URL + '/api/lookout' : `https://scira.ai/api/lookout`,
+      process.env.NODE_ENV === 'development' ? process.env.NGROK_URL + '/api/lookout' : `https://rovo.ai/api/lookout`,
       {
         method: 'POST',
         headers: {

@@ -1,9 +1,9 @@
 blank_issues_enabled: true
 contact_links:
   - name: Question or Discussion
-    url: https://github.com/zaidmukaddam/scira/discussions
+    url: https://github.com/zaidmukaddam/rovo/discussions
     about: Ask questions or discuss ideas with the community
   - name: Documentation
-    url: https://github.com/zaidmukaddam/scira/blob/main/README.md
+    url: https://github.com/zaidmukaddam/rovo/blob/main/README.md
     about: Check out the project documentation
 

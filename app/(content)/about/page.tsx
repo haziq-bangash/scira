@@ -24,7 +24,7 @@ import { ElevenLabsLogo } from '@/components/logos/elevenlabs-logo';
 import { PRICING, SEARCH_LIMITS } from '@/lib/constants';
 
 import { ThemeSwitcher } from '@/components/theme-switcher';
-import { SciraLogo } from '@/components/logos/scira-logo';
+import { RovoLogo } from '@/components/logos/scira-logo';
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -71,14 +71,14 @@ export default function AboutPage() {
           <div className="grid grid-cols-12 items-center h-16 border-x border-border">
             <div className="col-span-6 flex items-center h-full pl-4 border-border">
               <Link href="/" className="flex items-center gap-2 group">
-                <SciraLogo className="size-7 transition-transform group-hover:scale-110" />
-                <span className="text-2xl font-normal tracking-tighter font-be-vietnam-pro">Scira</span>
+                <RovoLogo className="size-7 transition-transform group-hover:scale-110" />
+                <span className="text-2xl font-normal tracking-tighter font-be-vietnam-pro">Rovo</span>
               </Link>
             </div>
 
             <div className="col-span-6 flex items-center justify-end gap-2 h-full px-4">
               <Link
-                href="https://git.new/scira"
+                href="https://git.new/rovo"
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors rounded-none"
                 target="_blank"
               >
@@ -122,7 +122,7 @@ export default function AboutPage() {
               </div>
               <h2 className="text-4xl font-bold text-foreground mb-6 tracking-tight">Agentic Research Platform</h2>
               <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-                A clean, minimalistic agentic research platform for grounded, up-to-date answers. Scira plans multi-step
+                A clean, minimalistic agentic research platform for grounded, up-to-date answers. Rovo plans multi-step
                 work, uses tools for web grounding and document retrieval (including PDFs), cites sources, and can
                 automate recurring research with Lookout.
               </p>
@@ -233,7 +233,7 @@ export default function AboutPage() {
               </form>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border">
                 <Link
-                  href="https://git.new/scira"
+                  href="https://git.new/rovo"
                   className="flex items-center justify-center h-11 gap-2 px-6 bg-foreground text-background hover:bg-foreground/90 transition-colors rounded-none border-r border-border group/link"
                   target="_blank"
                 >
@@ -351,7 +351,7 @@ export default function AboutPage() {
                   Extensible & Open
                 </h3>
                 <p className="text-sm text-muted-foreground group-hover:text-foreground/80 transition-colors">
-                  Open source by default. Self-host, bring your own models/tools, and tailor Scira to your research
+                  Open source by default. Self-host, bring your own models/tools, and tailor Rovo to your research
                   stack.
                 </p>
               </div>
@@ -433,15 +433,15 @@ export default function AboutPage() {
                   <div className="absolute top-0 left-0 w-full h-px bg-primary animate-reveal-line" />
                 </div>
                 <a
-                  href="https://openalternative.co/scira?utm_source=openalternative&utm_medium=badge&utm_campaign=embed&utm_content=tool-scira"
+                  href="https://openalternative.co/rovo?utm_source=openalternative&utm_medium=badge&utm_campaign=embed&utm_content=tool-rovo"
                   target="_blank"
                   className="inline-block"
                 >
                   <Image
-                    src="https://openalternative.co/scira/badge.svg?theme=dark&width=200&height=50"
+                    src="https://openalternative.co/rovo/badge.svg?theme=dark&width=200&height=50"
                     width={200}
                     height={50}
-                    alt="Scira badge"
+                    alt="Rovo badge"
                     className="mx-auto"
                   />
                 </a>
@@ -953,7 +953,7 @@ export default function AboutPage() {
                   <li className="flex items-start gap-3">
                     <div className="w-1.5 h-1.5 bg-primary mt-2 shrink-0"></div>
                     <span className="text-muted-foreground group-hover:text-foreground transition-colors">
-                      Scira Lookout
+                      Rovo Lookout
                     </span>
                   </li>
                 </ul>
@@ -1002,16 +1002,16 @@ export default function AboutPage() {
             {/* Section Header */}
             <div className="col-span-12 bg-card p-6 border-b border-border">
               <h2 className="text-2xl font-semibold mb-2">Frequently Asked Questions</h2>
-              <p className="text-muted-foreground">Find answers to common questions about Scira</p>
+              <p className="text-muted-foreground">Find answers to common questions about Rovo</p>
             </div>
 
             {/* FAQ Accordion */}
             <div className="col-span-12 bg-card p-6 border-b border-border">
               <ProAccordion type="single" collapsible className="w-full">
                 <ProAccordionItem value="item-1">
-                  <ProAccordionTrigger>What is Scira?</ProAccordionTrigger>
+                  <ProAccordionTrigger>What is Rovo?</ProAccordionTrigger>
                   <ProAccordionContent>
-                    Scira is an open-source agentic research platform. It combines planning + tool use with RAG
+                    Rovo is an open-source agentic research platform. It combines planning + tool use with RAG
                     (Retrieval-Augmented Generation) and search grounding to produce accurate, up-to-date answers with
                     citations.
                   </ProAccordionContent>
@@ -1044,17 +1044,17 @@ export default function AboutPage() {
                 </ProAccordionItem>
 
                 <ProAccordionItem value="item-5">
-                  <ProAccordionTrigger>What AI models does Scira use?</ProAccordionTrigger>
+                  <ProAccordionTrigger>What AI models does Rovo use?</ProAccordionTrigger>
                   <ProAccordionContent>
-                    Scira uses a range of advanced AI models including Grok, Claude, OpenAI GPT, Gemini, and more to
+                    Rovo uses a range of advanced AI models including Grok, Claude, OpenAI GPT, Gemini, and more to
                     provide the best possible answers for different types of queries.
                   </ProAccordionContent>
                 </ProAccordionItem>
 
                 <ProAccordionItem value="item-6">
-                  <ProAccordionTrigger>How does Scira ensure information accuracy?</ProAccordionTrigger>
+                  <ProAccordionTrigger>How does Rovo ensure information accuracy?</ProAccordionTrigger>
                   <ProAccordionContent>
-                    Scira grounds outputs in retrieved sources (RAG + search grounding) and includes citations so you
+                    Rovo grounds outputs in retrieved sources (RAG + search grounding) and includes citations so you
                     can audit the evidence. Agents can cross-check multiple sources before synthesizing an answer.
                   </ProAccordionContent>
                 </ProAccordionItem>
@@ -1068,7 +1068,7 @@ export default function AboutPage() {
                   <p className="text-sm font-medium text-foreground mb-1">Ready to get started?</p>
                   <p className="text-xs text-muted-foreground">
                     Have more questions?{' '}
-                    <a href="mailto:zaid@scira.ai" className="text-primary hover:text-primary/80 transition-colors">
+                    <a href="mailto:zaid@rovo.ai" className="text-primary hover:text-primary/80 transition-colors">
                       Contact us
                     </a>
                   </p>
@@ -1102,9 +1102,9 @@ export default function AboutPage() {
           <div className="grid grid-cols-12 border-l border-r border-border">
             <div className="col-span-12 md:col-span-8 bg-card p-4 md:p-6 border-r border-b border-border">
               <div className="flex items-center gap-3">
-                <SciraLogo className="size-8" />
+                <RovoLogo className="size-8" />
                 <p className="text-sm text-muted-foreground">
-                  © {new Date().getFullYear()} Scira. All rights reserved.
+                  © {new Date().getFullYear()} Rovo. All rights reserved.
                 </p>
               </div>
             </div>
@@ -1123,14 +1123,14 @@ export default function AboutPage() {
                   Privacy
                 </Link>
                 <Link
-                  href="https://x.com/sciraai"
+                  href="https://x.com/rovoai"
                   className="flex items-center justify-center h-12 text-muted-foreground hover:text-foreground transition-colors border-r md:border-r-0 md:border-0 border-border"
                   target="_blank"
                 >
                   <XLogoIcon className="h-4 w-4" />
                 </Link>
                 <Link
-                  href="https://git.new/scira"
+                  href="https://git.new/rovo"
                   className="flex items-center justify-center h-12 text-muted-foreground hover:text-foreground transition-colors"
                   target="_blank"
                 >

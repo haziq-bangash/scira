@@ -290,7 +290,7 @@ export async function POST(req: NextRequest) {
       }
     };
 
-    // Professional header with Scira branding and chat title
+    // Professional header with Rovo branding and chat title
     const drawProfessionalHeader = () => {
       // One-line: logo + app name/title
       const titleSize = 16;
@@ -301,9 +301,9 @@ export async function POST(req: NextRequest) {
       const capHeight = titleSize * 0.7;
       const baselineAdjust = 25; // nudge downward for visual alignment
       const logoTop = y + capHeight + baselineAdjust;
-      const logoHeight = drawSciraLogo(margin, logoTop, logoWidth, logoColor);
+      const logoHeight = drawRovoLogo(margin, logoTop, logoWidth, logoColor);
       const textX = margin + logoWidth + 8;
-      const headerText = title ?? 'Scira AI';
+      const headerText = title ?? 'Rovo AI';
       drawTextWithFallback(headerText, textX, y, titleSize, fontBold, rgb(0, 0, 0));
       y -= Math.max(titleSize, logoHeight) + 12;
 
@@ -798,9 +798,9 @@ export async function POST(req: NextRequest) {
       return out;
     };
 
-    // Draw the Scira logo (vector) using the same SVG paths as components/logos/scira-logo.tsx
+    // Draw the Rovo logo (vector) using the same SVG paths as components/logos/rovo-logo.tsx
     // Positions the logo with its top-left at (x, yTop). Width controls overall size.
-    function drawSciraLogo(x: number, yTop: number, width: number, color = rgb(0, 0, 0)) {
+    function drawRovoLogo(x: number, yTop: number, width: number, color = rgb(0, 0, 0)) {
       // Original viewBox: 910 x 934
       const vbW = 910;
       const vbH = 934;
@@ -810,7 +810,7 @@ export async function POST(req: NextRequest) {
 
       const border = (w: number) => Math.max(0.5, w * scale);
 
-      // Paths extracted from /components/logos/scira-logo.tsx
+      // Paths extracted from /components/logos/rovo-logo.tsx
       const p1 =
         'M647.664 197.775C569.13 189.049 525.5 145.419 516.774 66.8849C508.048 145.419 464.418 189.049 385.884 197.775C464.418 206.501 508.048 250.131 516.774 328.665C525.5 250.131 569.13 206.501 647.664 197.775Z';
       const p2 =
@@ -2000,7 +2000,7 @@ export async function POST(req: NextRequest) {
     const view = new Uint8Array(ab);
     view.set(pdfBytes);
 
-    const filename = `scira-export.pdf`;
+    const filename = `rovo-export.pdf`;
     return new Response(ab, {
       status: 200,
       headers: {

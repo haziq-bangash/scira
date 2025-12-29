@@ -37,10 +37,10 @@ function SettingsContent() {
   const defaultTab = searchParams.get('tab') || 'usage';
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useSyncedPreferences<boolean>(
-    'scira-custom-instructions-enabled',
+    'rovo-custom-instructions-enabled',
     true,
   );
-  const [blurPersonalInfo, setBlurPersonalInfo] = useSyncedPreferences<boolean>('scira-blur-personal-info', false);
+  const [blurPersonalInfo, setBlurPersonalInfo] = useSyncedPreferences<boolean>('rovo-blur-personal-info', false);
 
   const tabs = [
     { value: 'usage', label: 'Usage', icon: Analytics01Icon },

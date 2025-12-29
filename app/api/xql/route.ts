@@ -14,7 +14,7 @@ import {
 import { ChatSDKError } from '@/lib/errors';
 
 import { markdownJoinerTransform } from '@/lib/parser';
-import { scira } from '@/ai/providers';
+import { rovo } from '@/ai/providers';
 
 import { z } from 'zod';
 import { GroqProviderOptions } from '@ai-sdk/groq';
@@ -143,7 +143,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: scira.languageModel('scira-default'),
+    model: rovo.languageModel('rovo-default'),
     messages: await convertToModelMessages(messages),
     stopWhen: hasToolCall('xql'),
     onAbort: ({ steps }) => {

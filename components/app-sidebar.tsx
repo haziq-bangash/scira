@@ -63,7 +63,7 @@ import {
 } from '@/components/ui/sidebar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
-import { SciraLogo } from '@/components/logos/scira-logo';
+import { RovoLogo } from '@/components/logos/scira-logo';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { useTheme } from 'next-themes';
@@ -118,7 +118,7 @@ interface AppSidebarProps {
 
 export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarProps) => {
   const { theme, setTheme } = useTheme();
-  const [blurPersonalInfo] = useSyncedPreferences<boolean>('scira-blur-personal-info', false);
+  const [blurPersonalInfo] = useSyncedPreferences<boolean>('rovo-blur-personal-info', false);
   const { state, isMobile, setOpenMobile } = useSidebar();
   const [keyboardShortcutsOpen, setKeyboardShortcutsOpen] = React.useState(false);
 
@@ -185,17 +185,10 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
       href: '/privacy-policy',
     },
     {
-      id: 'github',
-      label: 'GitHub',
-      icon: GithubLogoIcon,
-      href: 'https://git.new/scira',
-      external: true,
-    },
-    {
       id: 'feedback',
       label: 'Feedback',
       icon: BugIcon,
-      href: 'https://scira.userjot.com',
+      href: 'https://rovo.userjot.com',
       external: true,
     },
   ];
@@ -319,10 +312,10 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
             <div className="relative flex items-center w-full h-12 px-2 overflow-visible">
               <div className="flex items-center gap-1 w-full group-data-[collapsible=icon]:justify-center">
                 <div className="flex items-center justify-center size-8 transition-opacity duration-200 group-data-[collapsible=icon]:group-hover:opacity-0">
-                  <SciraLogo width={26} height={26} />
+                  <RovoLogo width={26} height={26} />
                 </div>
                 <div className="flex flex-row items-center gap-2 leading-none group-data-[collapsible=icon]:hidden">
-                  <span className="font-be-vietnam-pro font-light tracking-tighter text-xl">scira</span>
+                  <span className="font-be-vietnam-pro font-light tracking-tighter text-xl">rovo</span>
                   {user && isProUser && (
                     <div className="w-fit">
                       <span className="text-xs font-baumans inline-flex items-center justify-center min-w-6 h-4 px-1.5 pt-0 pb-0.5 rounded-md shadow-sm bg-linear-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-linear-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
@@ -472,45 +465,6 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
               </SidebarMenuButton>
             </SidebarMenuItem>
           )}
-
-          {/* X Wrapped - Standalone Tool Item (all users) */}
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="X Wrapped 2025"
-              className={cn('hover:bg-primary/10', pathname === '/x-wrapped' ? 'bg-primary/12 text-foreground' : '')}
-            >
-              <Link
-                prefetch={true}
-                href="/x-wrapped"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full"
-              >
-                <XLogoIcon size={18} weight="regular" />
-                <span className="group-data-[collapsible=icon]:hidden">X Wrapped</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          {/* API - Standalone Tool Item */}
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="API"
-              className="hover:bg-primary/10"
-            >
-              <a
-                href="https://api.scira.ai/"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full"
-              >
-                <CodeIcon size={18} weight="regular" />
-                <span className="group-data-[collapsible=icon]:hidden">API</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
 
           {/* Guest Info Links when signed out */}
           {!user &&
@@ -754,7 +708,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                             {user.name || 'User'}
                           </span>
                           <span className="text-xs text-sidebar-foreground/70 truncate text-left w-full">
-                            {isProUser ? 'Scira Pro' : 'Scira Free'}
+                            {isProUser ? 'Rovo Pro' : 'Rovo Free'}
                           </span>
                         </div>
                       </div>
@@ -826,32 +780,32 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                       </DropdownMenuSubTrigger>
                       <DropdownMenuSubContent sideOffset={8} alignOffset={-20} collisionPadding={{ bottom: 20 }} className="bg-background border shadow-lg">
                         <DropdownMenuItem asChild>
-                          <a href="https://git.new/scira" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
+                          <a href="https://git.new/rovo" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
                             <GithubLogoIcon size={16} weight="regular" className="mr-2" />
                             <span>GitHub</span>
                           </a>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <a href="https://x.com/sciraai" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
+                          <a href="https://x.com/rovoai" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
                             <XLogoIcon size={16} weight="regular" className="mr-2" />
                             <span>X.com</span>
                           </a>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <a href="https://www.instagram.com/scira.ai" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
+                          <a href="https://www.instagram.com/rovo.ai" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
                             <InstagramLogoIcon size={16} weight="regular" className="mr-2" />
                             <span>Instagram</span>
                           </a>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <a href="https://scira.userjot.com" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
+                          <a href="https://rovo.userjot.com" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
                             <BugIcon size={16} weight="regular" className="mr-2" />
                             <span>Feedback</span>
                           </a>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <a
-                            href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira"
+                            href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Frovo"
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={closeMobileSidebar}
@@ -894,7 +848,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                     {/* User info header */}
                     <div className="px-2 py-1.5">
                       <p className="text-sm font-semibold">{user.name || 'User'}</p>
-                      <p className="text-xs text-muted-foreground">{isProUser ? 'Scira Pro' : 'Scira Free'}</p>
+                      <p className="text-xs text-muted-foreground">{isProUser ? 'Rovo Pro' : 'Rovo Free'}</p>
                     </div>
 
                     <DropdownMenuSeparator />
@@ -927,7 +881,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <a href="https://git.new/scira" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
+                      <a href="https://git.new/rovo" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
                         <GithubLogoIcon size={16} weight="regular" className="mr-2" />
                         <span>GitHub</span>
                       </a>

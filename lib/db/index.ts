@@ -1,45 +1,56 @@
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon } from "@neondatabase/serverless";
 import { withReplicas } from 'drizzle-orm/pg-core';
 import { serverEnv } from '@/env/server';
 import { RedisDrizzleCache } from '@databuddy/cache';
 import Redis from 'ioredis';
 import * as schema from './schema';
-import { Pool } from 'pg';
 
-// Create Redis client
-const redis = new Redis(serverEnv.REDIS_URL);
+// Create Redis client with error handling
+const redis = new Redis(serverEnv.REDIS_URL, {
+  maxRetriesPerRequest: 3,
+  enableReadyCheck: true,
+  retryStrategy(times) {
+    const delay = Math.min(times * 50, 2000);
+    return delay;
+  },
+});
+
+// Handle Redis connection errors
+redis.on('error', (err) => {
+  console.error('Redis connection error:', err.message);
+});
+
+redis.on('connect', () => {
+  console.log('✅ Redis connected successfully');
+});
 
 // Create shared cache instance
 const cache = new RedisDrizzleCache({
   redis,
   defaultTtl: 20,
   strategy: 'explicit',
-  namespace: 'scira:drizzle',
+  namespace: 'rovo:drizzle',
 });
+
+const sql = neon(serverEnv.DATABASE_URL!);
 
 export const maindb = drizzle({
-  client: new Pool({
-    connectionString: serverEnv.DATABASE_URL,
-    ssl: true,
-  }),
+  client: sql,
   schema,
   cache,
 });
 
+const sql1 = process.env.READ_DB_1 ? neon(process.env.READ_DB_1) : sql;
 const dbread1 = drizzle({
-  client: new Pool({
-    connectionString: process.env.READ_DB_1,
-    ssl: true,
-  }),
+  client: sql1,
   schema,
   cache,
 });
 
+const sql2 = process.env.READ_DB_2 ? neon(process.env.READ_DB_2) : sql;
 const dbread2 = drizzle({
-  client: new Pool({
-    connectionString: process.env.READ_DB_2,
-    ssl: true,
-  }),
+  client: sql2,
   schema,
   cache,
 });
