@@ -78,8 +78,10 @@ interface YouTubeSearchResultsProps {
 const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
   const [transcriptSearch, setTranscriptSearch] = useState('');
   const [chapterSearch, setChapterSearch] = useState('');
-  const [activeTab, setActiveTab] = useState<'watch' | 'details'>('details');
+  const [activeTab, setActiveTab] = useState<'watch' | 'details'>('watch');
   const [currentTime, setCurrentTime] = useState<number>(0);
+  const [isWatchChaptersDialogOpen, setIsWatchChaptersDialogOpen] = useState(false);
+  const [isDetailsChaptersDialogOpen, setIsDetailsChaptersDialogOpen] = useState(false);
 
   // Format timestamp for accessibility and URL generation
   const formatTimestamp = (timestamp: string) => {
@@ -269,7 +271,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                 </div>
               </ScrollArea>
               {video.timestamps.length > 8 && (
-                <Dialog>
+                <Dialog open={isWatchChaptersDialogOpen} onOpenChange={setIsWatchChaptersDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="w-full h-7 text-xs">
                       View All {video.timestamps.length} Chapters
@@ -295,6 +297,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                               onClick={() => {
                                 setCurrentTime(seconds);
                                 setActiveTab('watch');
+                                setIsWatchChaptersDialogOpen(false);
                               }}
                               className="w-full flex items-start gap-3 p-3 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:border-red-300 dark:hover:border-red-600 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all text-left"
                             >
@@ -424,7 +427,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
             <div className="absolute bottom-3 left-3 right-3 flex gap-2">
               {/* Timestamps Dialog */}
               {video.timestamps && video.timestamps.length > 0 && (
-                <Dialog>
+                <Dialog open={isDetailsChaptersDialogOpen} onOpenChange={setIsDetailsChaptersDialogOpen}>
                   <DialogTrigger asChild>
                     <Button
                       variant="outline"
@@ -476,11 +479,14 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                               if (!time || seconds === 0) return null;
 
                               return (
-                                <Link
+                                <button
                                   key={i}
-                                  href={`${video.url}&t=${seconds}`}
-                                  target="_blank"
-                                  className="group flex items-start gap-4 p-3 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:border-red-300 dark:hover:border-red-600 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all duration-200"
+                                  onClick={() => {
+                                    setCurrentTime(seconds);
+                                    setActiveTab('watch');
+                                    setIsDetailsChaptersDialogOpen(false);
+                                  }}
+                                  className="group w-full flex items-start gap-4 p-3 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:border-red-300 dark:hover:border-red-600 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all duration-200 text-left"
                                 >
                                   <div className="flex items-center justify-center min-w-15 h-8 bg-neutral-100 dark:bg-neutral-800 rounded font-mono text-sm font-medium text-neutral-700 dark:text-neutral-300 group-hover:bg-red-50 dark:group-hover:bg-red-950/30 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
                                     {chapterSearch.trim() && time.toLowerCase().includes(chapterSearch.toLowerCase())
@@ -528,7 +534,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                                         : description}
                                     </p>
                                   </div>
-                                </Link>
+                                </button>
                               );
                             })
                             .filter(Boolean)}
@@ -771,8 +777,8 @@ export const YouTubeSearchResults: React.FC<YouTubeSearchResultsProps> = ({ resu
                     <MemoizedYouTubeCard video={video} index={index} />
                   </div>
                 ))}
-              <ScrollBar orientation="horizontal" />
               </div>
+              <ScrollBar orientation="horizontal" />
             </ScrollArea>
           </AccordionContent>
         </AccordionItem>
