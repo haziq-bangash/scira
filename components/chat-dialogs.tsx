@@ -16,7 +16,7 @@ import { useState, useEffect, useMemo } from 'react';
 // Pro Badge Component
 const ProBadge = ({ className = '' }: { className?: string }) => (
   <span
-    className={`font-baumans! inline-flex items-center gap-1 rounded-lg shadow-sm border-transparent ring-offset-1 ring-offset-background/50 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground px-2.5 pb-2.5 pt-1.5 leading-3 dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground ${className}`}
+    className={`font-baumans! inline-flex items-center gap-1 rounded-lg shadow-sm border-transparent ring-offset-1 ring-offset-background/50 bg-linear-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground px-2.5 pb-2.5 pt-1.5 leading-3 dark:bg-linear-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground ${className}`}
   >
     <span>pro</span>
   </span>
@@ -69,7 +69,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-[420px]" showCloseButton={false}>
+      <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-105" showCloseButton={false}>
         <DialogHeader className="p-0">
           <div className="relative h-80 overflow-hidden rounded-t-lg">
             <Image
@@ -91,7 +91,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
               <DialogTitle className="flex items-center gap-3 text-white mb-2">
                 <span className="text-4xl font-medium flex items-center gap-2 font-be-vietnam-pro">
                   rovo
-                  <ProBadge className="!text-white !bg-white/20 !ring-white/30 font-light text-xl !tracking-normal" />
+                  <ProBadge className="text-white! bg-white/20! ring-white/30! font-light text-xl tracking-normal!" />
                 </span>
               </DialogTitle>
               <DialogDescription className="text-white/90">

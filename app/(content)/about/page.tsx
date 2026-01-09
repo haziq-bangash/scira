@@ -557,7 +557,7 @@ export default function AboutPage() {
                       <ArrowUpRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[92.5vw] sm:w-[280px] p-0 rounded-none border border-border bg-card shadow-none">
+                  <PopoverContent className="w-[92.5vw] sm:w-70 p-0 rounded-none border border-border bg-card shadow-none">
                     <Command className="rounded-none bg-background">
                       <CommandInput
                         placeholder="Search categories..."
@@ -606,7 +606,7 @@ export default function AboutPage() {
                       <ArrowUpRight className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[92.5vw] sm:w-[280px] p-0 rounded-none border border-border bg-card shadow-none">
+                  <PopoverContent className="w-[92.5vw] sm:w-70 p-0 rounded-none border border-border bg-card shadow-none">
                     <Command className="rounded-none bg-background">
                       <CommandInput placeholder="Search capabilities..." className="h-10 rounded-none bg-background" />
                       <CommandList>

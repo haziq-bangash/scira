@@ -81,7 +81,7 @@ const NavigationMenu = memo(() => {
           Menu
         </TooltipContent>
       </Tooltip>
-      <DropdownMenuContent className="w-[240px] z-[110] mr-5">
+      <DropdownMenuContent className="w-60 z-110 mr-5">
         {/* Lookout - only show if authenticated */}
         {isAuthenticated && (
           <DropdownMenuItem className="cursor-pointer" onClick={() => router.push('/lookout')}>
@@ -166,7 +166,7 @@ const NavigationMenu = memo(() => {
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a href={'https://rovo.userjot.com'} target="_blank" className="w-full flex items-center gap-2">
+          <a href={'https://rovoai.userjot.com/'} target="_blank" className="w-full flex items-center gap-2">
             <BugIcon className="size-4" />
             <span>Feature/Bug Request</span>
           </a>
@@ -283,7 +283,7 @@ const UserProfile = memo(
                 Account
               </TooltipContent>
             </Tooltip>
-            <DropdownMenuContent className="w-[240px] z-[110] mr-5">
+            <DropdownMenuContent className="w-60 z-110 mr-5">
               <div className="p-3">
                 <div className="flex items-center gap-2">
                   <Avatar className="size-8 shrink-0 rounded-md border border-neutral-200 dark:border-neutral-700 overflow-hidden mask-[radial-gradient(white,black)] [-webkit-mask-image:-webkit-radial-gradient(white,black)]">
@@ -304,7 +304,7 @@ const UserProfile = memo(
                       <div
                         className={cn(
                           'text-xs text-muted-foreground',
-                          showEmail ? '' : 'max-w-[160px] truncate',
+                          showEmail ? '' : 'max-w-40 truncate',
                           blurPersonalInfo && 'blur-sm',
                         )}
                         title={currentUser?.email || ''}

@@ -186,7 +186,6 @@ export const stockChartTool = tool({
 
     // Check if user is pro for premium features
     const isProUser = await isUserProCached();
-    console.log('Pro user:', isProUser);
 
     // Override pro-only features if user is not pro
     const actualIncludeEarnings = isProUser; // Earnings always require pro
