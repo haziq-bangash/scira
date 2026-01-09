@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { elevenlabs } from '@ai-sdk/elevenlabs';
-import { groq } from '@ai-sdk/groq';
+import { openai } from '@ai-sdk/openai';
 import { experimental_transcribe as transcribe } from 'ai';
 
 export async function POST(request: NextRequest) {
@@ -14,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await transcribe({
-      model: elevenlabs.transcription('scribe_v1'),
+      model: openai.transcription('gpt-4o-transcribe'),
       audio: await audio.arrayBuffer(),
     });
 

@@ -20,7 +20,7 @@ import { v7 as uuidv7 } from 'uuid';
 import { CronExpressionParser } from 'cron-parser';
 import { sendLookoutCompletionEmail } from '@/lib/email';
 import { db } from '@/lib/db';
-import { subscription, dodosubscription } from '@/lib/db/schema';
+import { subscription } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 // Import extreme search tool
@@ -30,35 +30,17 @@ import { ChatMessage } from '@/lib/types';
 // Helper function to check if a user is pro by userId
 async function checkUserIsProById(userId: string): Promise<boolean> {
   try {
-    // Check for active Polar subscription
-    const polarSubscriptions = await db.select().from(subscription).where(eq(subscription.userId, userId));
+    // Check for active Stripe subscription
+    const stripeSubscriptions = await db.select().from(subscription).where(eq(subscription.referenceId, userId));
 
-    // Check if any Polar subscription is active
-    const activePolarSubscription = polarSubscriptions.find((sub) => {
+    // Check if any Stripe subscription is active
+    const activeStripeSubscription = stripeSubscriptions.find((sub) => {
       const now = new Date();
-      const isActive = sub.status === 'active' && new Date(sub.currentPeriodEnd) > now;
+      const isActive = sub.status === 'active' && (!sub.periodEnd || new Date(sub.periodEnd) > now);
       return isActive;
     });
 
-    if (activePolarSubscription) {
-      return true;
-    }
-
-    // Check for Dodo subscriptions
-    const dodoSubscriptions = await db.select().from(dodosubscription).where(eq(dodosubscription.userId, userId));
-
-    // Check if any Dodo subscription is active
-    const activeDodoSubscription = dodoSubscriptions.find((sub) => {
-      const now = new Date();
-      const isActive = sub.status === 'active' && (!sub.currentPeriodEnd || new Date(sub.currentPeriodEnd) > now);
-      return isActive;
-    });
-
-    if (activeDodoSubscription) {
-      return true;
-    }
-
-    return false;
+    return !!activeStripeSubscription;
   } catch (error) {
     console.error('Error checking pro status:', error);
     return false; // Fail closed - don't allow access if we can't verify

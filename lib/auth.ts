@@ -10,9 +10,8 @@ import {
   message,
   extremeSearchUsage,
   messageUsage,
-  subscription,
+  subscription as subscriptionTable,
   payment,
-  dodosubscription,
   customInstructions,
   stream,
   lookout,
@@ -21,15 +20,8 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { db } from '@/lib/db';
 import { config } from 'dotenv';
 import { serverEnv } from '@/env/server';
-import { checkout, polar, portal, usage, webhooks } from '@polar-sh/better-auth';
-import { Polar } from '@polar-sh/sdk';
-import {
-  dodopayments,
-  checkout as dodocheckout,
-  portal as dodoportal,
-  webhooks as dodowebhooks,
-} from '@dodopayments/better-auth';
-import DodoPayments from 'dodopayments';
+import { stripe } from '@better-auth/stripe';
+import Stripe from 'stripe';
 import { eq } from 'drizzle-orm';
 import { invalidateUserCaches } from './performance-cache';
 import { clearUserDataCache } from './user-data-server';
@@ -57,131 +49,121 @@ function parseBooleanFlag(value: unknown): boolean {
   return Boolean(value);
 }
 
-const polarClient = new Polar({
-  accessToken: process.env.POLAR_ACCESS_TOKEN,
-  ...(process.env.NODE_ENV === 'production' ? {} : { server: 'sandbox' }),
-});
-
-export const dodoPayments = new DodoPayments({
-  bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
-  ...(process.env.NODE_ENV === 'production' ? { environment: 'live_mode' } : { environment: 'test_mode' }),
-});
-
-// Helper function to handle subscription webhooks
-async function handleSubscriptionWebhook(payload: any, status: string) {
+// Helper function to handle Stripe subscription webhook events
+async function handleStripeSubscriptionEvent(event: Stripe.Event) {
   try {
-    const data = payload.data;
+    const subscription = event.data.object as Stripe.Subscription;
+    const customerId = subscription.customer as string;
+    
+    // Get userId from subscription metadata or customer
+    let userId: string | null = null;
+    
+    // Try to get userId from subscription metadata first
+    if (subscription.metadata?.userId) {
+      userId = subscription.metadata.userId;
+    } else {
+      // Try to find user by Stripe customer ID
+      const existingSubscription = await db.query.subscription.findFirst({
+        where: eq(subscriptionTable.stripeCustomerId, customerId),
+        columns: { referenceId: true },
+      });
+      userId = existingSubscription?.referenceId || null;
+    }
 
-    // Extract user ID from customer data if available
-    let validUserId = null;
-    if (data.customer?.email) {
-      try {
-        const userExists = await db.query.user.findFirst({
-          where: eq(user.email, data.customer.email),
-          columns: { id: true },
-        });
-        validUserId = userExists ? userExists.id : null;
+    if (!userId) {
+      console.warn('⚠️ No userId found for Stripe subscription event:', event.type);
+      return;
+    }
 
-        if (!userExists) {
-          console.warn(`⚠️ User with email ${data.customer.email} not found, creating subscription without user link`);
-        }
-      } catch (error) {
-        console.error('Error checking user existence:', error);
+    // Map event types to status
+    const eventTypeToStatus: Record<string, string> = {
+      'customer.subscription.created': 'active',
+      'customer.subscription.updated': mapStripeStatus(subscription.status),
+      'customer.subscription.deleted': 'canceled',
+      'customer.subscription.paused': 'paused',
+      'customer.subscription.resumed': 'active',
+    };
+
+    const status = eventTypeToStatus[event.type] || subscription.status;
+
+    // Helper to map Stripe status
+    function mapStripeStatus(stripeStatus: string): string {
+      switch (stripeStatus) {
+        case 'active': return 'active';
+        case 'canceled': return 'canceled';
+        case 'past_due':
+        case 'unpaid': return 'past_due';
+        case 'trialing': return 'trialing';
+        case 'paused': return 'paused';
+        default: return stripeStatus;
       }
     }
 
-    const currentPeriodStart =
-      safeParseDate(
-        data.previous_billing_date ||
-          data.current_period_start ||
-          data.billing_cycle?.current_period_start ||
-          data.period_start,
-      ) || new Date(data.created_at);
-
-    const currentPeriodEnd = safeParseDate(
-      data.next_billing_date ||
-        data.current_period_end ||
-        data.billing_cycle?.current_period_end ||
-        data.period_end ||
-        data.next_payment_due_date,
-    );
-
-    const cancelAtPeriodEnd = parseBooleanFlag(
-      data.cancel_at_next_billing_date ??
-        data.cancel_at_period_end ??
-        data.cancel_at_current_period_end ??
-        data.cancelled_at_period_end,
-    );
-
-    // Build subscription data
+    // Build subscription data according to Better Auth Stripe schema
     const subscriptionData = {
-      id: data.subscription_id,
-      createdAt: new Date(data.created_at),
-      updatedAt: data.updated_at ? new Date(data.updated_at) : null,
-      status: status,
-      productId: data.product_id || data.product_cart?.[0]?.product_id || '',
-      customerId: data.customer_id || data.customer?.customer_id || '',
-      businessId: data.business_id || null,
-      brandId: data.brand_id || null,
-      currency: data.currency,
-      amount: data.recurring_pre_tax_amount || 0,
-      interval: data.payment_frequency_interval || null,
-      intervalCount: data.payment_frequency_count || null,
-      trialPeriodDays: data.trial_period_days || null,
-      currentPeriodStart,
-      currentPeriodEnd,
-      cancelledAt: data.cancelled_at ? new Date(data.cancelled_at) : null,
-      cancelAtPeriodEnd,
-      endedAt: data.ended_at ? new Date(data.ended_at) : null,
-      discountId: data.discount_id || null,
-      // JSON fields
-      customer: data.customer || null,
-      metadata: data.metadata || null,
-      productCart: data.product_cart || null,
-      userId: validUserId,
+      id: subscription.id,
+      plan: 'pro',
+      referenceId: userId,
+      stripeCustomerId: customerId,
+      stripeSubscriptionId: subscription.id,
+      status,
+      periodStart: new Date((subscription as any).current_period_start * 1000),
+      periodEnd: new Date((subscription as any).current_period_end * 1000),
+      trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
+      trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000) : null,
+      canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
+      endedAt: subscription.ended_at ? new Date(subscription.ended_at * 1000) : null,
     };
 
-    console.log('💾 Final subscription data:', {
+    console.log('💾 Processing Stripe webhook event:', {
+      type: event.type,
       id: subscriptionData.id,
       status: subscriptionData.status,
-      userId: subscriptionData.userId,
-      amount: subscriptionData.amount,
-      currency: subscriptionData.currency,
+      referenceId: subscriptionData.referenceId,
     });
 
-    // Use Drizzle's onConflictDoUpdate for proper upsert
+    // Upsert subscription
     await db
-      .insert(dodosubscription)
+      .insert(subscriptionTable)
       .values(subscriptionData)
       .onConflictDoUpdate({
-        target: dodosubscription.id,
+        target: subscriptionTable.id,
         set: {
-          updatedAt: subscriptionData.updatedAt || new Date(),
+          plan: subscriptionData.plan,
+          referenceId: subscriptionData.referenceId,
           status: subscriptionData.status,
-          amount: subscriptionData.amount,
-          currentPeriodStart: subscriptionData.currentPeriodStart,
-          currentPeriodEnd: subscriptionData.currentPeriodEnd,
-          cancelledAt: subscriptionData.cancelledAt,
+          stripeCustomerId: subscriptionData.stripeCustomerId,
+          stripeSubscriptionId: subscriptionData.stripeSubscriptionId,
+          periodStart: subscriptionData.periodStart,
+          periodEnd: subscriptionData.periodEnd,
+          trialStart: subscriptionData.trialStart,
+          trialEnd: subscriptionData.trialEnd,
           cancelAtPeriodEnd: subscriptionData.cancelAtPeriodEnd,
+          cancelAt: subscriptionData.cancelAt,
+          canceledAt: subscriptionData.canceledAt,
           endedAt: subscriptionData.endedAt,
-          metadata: subscriptionData.metadata,
-          userId: subscriptionData.userId,
         },
       });
 
-    console.log('✅ Upserted subscription:', data.subscription_id);
+    console.log('✅ Processed Stripe webhook event:', event.type, subscription.id);
 
-    // Invalidate user caches when subscription status changes
-    if (validUserId) {
-      invalidateUserCaches(validUserId);
-      clearUserDataCache(validUserId);
-      console.log('🗑️ Invalidated caches for user:', validUserId);
+    // Invalidate user caches
+    if (userId) {
+      invalidateUserCaches(userId);
+      clearUserDataCache(userId);
+      console.log('🗑️ Invalidated caches for user:', userId);
     }
   } catch (error) {
-    console.error('💥 Error processing subscription webhook:', error);
-    // Don't throw - let webhook succeed to avoid retries
+    console.error('💥 Error processing Stripe webhook event:', error);
   }
 }
+
+// Initialize Stripe client
+export const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-12-15.clover',
+});
 
 export const auth = betterAuth({
   rateLimit: {
@@ -200,9 +182,8 @@ export const auth = betterAuth({
       message,
       extremeSearchUsage,
       messageUsage,
-      subscription,
+      subscription: subscriptionTable,
       payment,
-      dodosubscription,
       customInstructions,
       stream,
       lookout,
@@ -229,263 +210,119 @@ export const auth = betterAuth({
   },
   plugins: [
     lastLoginMethod(),
-    polar({
-      client: polarClient,
+    stripe({
+      stripeClient: stripeClient,
+      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
       createCustomerOnSignUp: true,
-      enableCustomerPortal: true,
-      getCustomerCreateParams: async ({ user: newUser }) => {
-        console.log('🚀 getCustomerCreateParams called for user:', newUser.id);
+      subscription: {
+        enabled: true,
+        plans: [
+          {
+            name: 'pro',
+            priceId: process.env.STRIPE_PRO_PRICE_ID || process.env.STRIPE_PREMIUM_PRICE_ID || '',
+          },
+        ],
+        onSubscriptionUpdate: async ({ event, subscription: sub }) => {
+          try {
+            // Extract Stripe subscription from event
+            if (event.type.startsWith('customer.subscription.')) {
+              const stripeSubscription = event.data.object as Stripe.Subscription;
+              const userId = sub.referenceId; // referenceId is the userId in better-auth
 
-        try {
-          // Look for existing customer by email
-          const { result: existingCustomers } = await polarClient.customers.list({
-            email: newUser.email,
-          });
+              if (!userId) {
+                console.warn('⚠️ No userId (referenceId) found in subscription update');
+                return;
+              }
 
-          const existingCustomer = existingCustomers.items[0];
-
-          if (existingCustomer && existingCustomer.externalId && existingCustomer.externalId !== newUser.id) {
-            console.log(
-              `🔗 Found existing customer ${existingCustomer.id} with external ID ${existingCustomer.externalId}`,
-            );
-            console.log(`🔄 Updating user ID from ${newUser.id} to ${existingCustomer.externalId}`);
-
-            // Update the user's ID in database to match the existing external ID
-            if (!newUser.id) {
-              console.error('Missing newUser.id; skipping user ID update to existing external ID');
-            } else {
-              await db.update(user).set({ id: existingCustomer.externalId }).where(eq(user.id, newUser.id));
-            }
-
-            console.log(`✅ Updated user ID to match existing external ID: ${existingCustomer.externalId}`);
-          }
-
-          return {};
-        } catch (error) {
-          console.error('💥 Error in getCustomerCreateParams:', error);
-          return {};
-        }
-      },
-      use: [
-        checkout({
-          products: [
-            {
-              productId:
-                process.env.NEXT_PUBLIC_STARTER_TIER ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_STARTER_TIER environment variable is required');
-                })(),
-              slug:
-                process.env.NEXT_PUBLIC_STARTER_SLUG ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_STARTER_SLUG environment variable is required');
-                })(),
-            },
-          ],
-          successUrl: `/success`,
-          authenticatedUsersOnly: true,
-        }),
-        portal(),
-        usage(),
-        webhooks({
-          secret:
-            process.env.POLAR_WEBHOOK_SECRET ||
-            (() => {
-              throw new Error('POLAR_WEBHOOK_SECRET environment variable is required');
-            })(),
-          onPayload: async ({ data, type }) => {
-            if (
-              type === 'subscription.created' ||
-              type === 'subscription.active' ||
-              type === 'subscription.canceled' ||
-              type === 'subscription.revoked' ||
-              type === 'subscription.uncanceled' ||
-              type === 'subscription.updated'
-            ) {
-              console.log('🎯 Processing subscription webhook:', type);
-              console.log('📦 Payload data:', JSON.stringify(data, null, 2));
-
-              try {
-                // STEP 0: Validate product ID matches expected product
-                const expectedProductId = process.env.NEXT_PUBLIC_STARTER_TIER;
-                const incomingProductId = data.productId;
-
-                if (expectedProductId && incomingProductId && incomingProductId !== expectedProductId) {
-                  console.warn(
-                    `⚠️ Product ID mismatch - expected: ${expectedProductId}, received: ${incomingProductId}. Skipping subscription.`,
-                  );
-                  return; // Don't add subscription if product ID doesn't match
+              // Map Stripe subscription status to our format
+              const mapStripeStatus = (stripeStatus: string): string => {
+                switch (stripeStatus) {
+                  case 'active':
+                    return 'active';
+                  case 'canceled':
+                    return 'canceled';
+                  case 'past_due':
+                  case 'unpaid':
+                    return 'past_due';
+                  case 'trialing':
+                    return 'trialing';
+                  default:
+                    return stripeStatus;
                 }
+              };
 
-                // STEP 1: Extract user ID from customer data
-                const userId = data.customer?.externalId;
+              // Build subscription data according to Better Auth Stripe schema
+              const subscriptionData = {
+                id: stripeSubscription.id,
+                plan: sub.plan || 'pro', // Plan name from better-auth subscription
+                referenceId: userId,
+                stripeCustomerId: stripeSubscription.customer as string,
+                stripeSubscriptionId: stripeSubscription.id,
+                status: mapStripeStatus(stripeSubscription.status),
+                periodStart: new Date((stripeSubscription as any).current_period_start * 1000),
+                periodEnd: new Date((stripeSubscription as any).current_period_end * 1000),
+                trialStart: stripeSubscription.trial_start ? new Date(stripeSubscription.trial_start * 1000) : null,
+                trialEnd: stripeSubscription.trial_end ? new Date(stripeSubscription.trial_end * 1000) : null,
+                cancelAtPeriodEnd: stripeSubscription.cancel_at_period_end,
+                cancelAt: stripeSubscription.cancel_at ? new Date(stripeSubscription.cancel_at * 1000) : null,
+                canceledAt: stripeSubscription.canceled_at ? new Date(stripeSubscription.canceled_at * 1000) : null,
+                endedAt: stripeSubscription.ended_at ? new Date(stripeSubscription.ended_at * 1000) : null,
+              };
 
-                // STEP 1.5: Check if user exists to prevent foreign key violations
-                let validUserId = null;
-                if (userId) {
-                  try {
-                    const userExists = await db.query.user.findFirst({
-                      where: eq(user.id, userId),
-                      columns: { id: true },
-                    });
-                    validUserId = userExists ? userId : null;
+              console.log('💾 Processing Stripe subscription update:', {
+                id: subscriptionData.id,
+                status: subscriptionData.status,
+                referenceId: subscriptionData.referenceId,
+                plan: subscriptionData.plan,
+              });
 
-                    if (!userExists) {
-                      console.warn(
-                        `⚠️ User ${userId} not found, creating subscription without user link - will auto-link when user signs up`,
-                      );
-                    }
-                  } catch (error) {
-                    console.error('Error checking user existence:', error);
-                  }
-                } else {
-                  console.error('🚨 No external ID found for subscription', {
-                    subscriptionId: data.id,
-                    customerId: data.customerId,
-                  });
-                }
-                // STEP 2: Build subscription data
-                const subscriptionData = {
-                  id: data.id,
-                  createdAt: new Date(data.createdAt),
-                  modifiedAt: safeParseDate(data.modifiedAt),
-                  amount: data.amount,
-                  currency: data.currency,
-                  recurringInterval: data.recurringInterval,
-                  status: data.status,
-                  currentPeriodStart: safeParseDate(data.currentPeriodStart) || new Date(),
-                  currentPeriodEnd: safeParseDate(data.currentPeriodEnd) || new Date(),
-                  cancelAtPeriodEnd: data.cancelAtPeriodEnd ?? true,
-                  canceledAt: safeParseDate(data.canceledAt),
-                  startedAt: safeParseDate(data.startedAt) || new Date(),
-                  endsAt: safeParseDate(data.endsAt),
-                  endedAt: safeParseDate(data.endedAt),
-                  customerId: data.customerId,
-                  productId: data.productId,
-                  discountId: data.discountId || null,
-                  checkoutId: data.checkoutId || '',
-                  customerCancellationReason: data.customerCancellationReason || null,
-                  customerCancellationComment: data.customerCancellationComment || null,
-                  metadata: data.metadata ? JSON.stringify(data.metadata) : null,
-                  customFieldData: data.customFieldData ? JSON.stringify(data.customFieldData) : null,
-                  userId: validUserId,
-                };
-
-                console.log('💾 Final subscription data:', {
-                  id: subscriptionData.id,
-                  status: subscriptionData.status,
-                  userId: subscriptionData.userId,
-                  amount: subscriptionData.amount,
+              // Upsert subscription (Stripe plugin will also manage this, but we sync for legacy compatibility)
+              await db
+                .insert(subscriptionTable)
+                .values(subscriptionData)
+                .onConflictDoUpdate({
+                  target: subscriptionTable.id,
+                  set: {
+                    plan: subscriptionData.plan,
+                    referenceId: subscriptionData.referenceId,
+                    status: subscriptionData.status,
+                    stripeCustomerId: subscriptionData.stripeCustomerId,
+                    stripeSubscriptionId: subscriptionData.stripeSubscriptionId,
+                    periodStart: subscriptionData.periodStart,
+                    periodEnd: subscriptionData.periodEnd,
+                    trialStart: subscriptionData.trialStart,
+                    trialEnd: subscriptionData.trialEnd,
+                    cancelAtPeriodEnd: subscriptionData.cancelAtPeriodEnd,
+                    cancelAt: subscriptionData.cancelAt,
+                    canceledAt: subscriptionData.canceledAt,
+                    endedAt: subscriptionData.endedAt,
+                  },
                 });
 
-                // STEP 3: Use Drizzle's onConflictDoUpdate for proper upsert
-                await db
-                  .insert(subscription)
-                  .values(subscriptionData)
-                  .onConflictDoUpdate({
-                    target: subscription.id,
-                    set: {
-                      modifiedAt: subscriptionData.modifiedAt || new Date(),
-                      amount: subscriptionData.amount,
-                      currency: subscriptionData.currency,
-                      recurringInterval: subscriptionData.recurringInterval,
-                      status: subscriptionData.status,
-                      currentPeriodStart: subscriptionData.currentPeriodStart,
-                      currentPeriodEnd: subscriptionData.currentPeriodEnd,
-                      cancelAtPeriodEnd: subscriptionData.cancelAtPeriodEnd,
-                      canceledAt: subscriptionData.canceledAt,
-                      startedAt: subscriptionData.startedAt,
-                      endsAt: subscriptionData.endsAt,
-                      endedAt: subscriptionData.endedAt,
-                      customerId: subscriptionData.customerId,
-                      productId: subscriptionData.productId,
-                      discountId: subscriptionData.discountId,
-                      checkoutId: subscriptionData.checkoutId,
-                      customerCancellationReason: subscriptionData.customerCancellationReason,
-                      customerCancellationComment: subscriptionData.customerCancellationComment,
-                      metadata: subscriptionData.metadata,
-                      customFieldData: subscriptionData.customFieldData,
-                      userId: subscriptionData.userId,
-                    },
-                  });
+              console.log('✅ Upserted Stripe subscription:', stripeSubscription.id);
 
-                console.log('✅ Upserted subscription:', data.id);
-
-                // Invalidate user caches when subscription changes
-                if (validUserId) {
-                  invalidateUserCaches(validUserId);
-                  clearUserDataCache(validUserId);
-                  console.log('🗑️ Invalidated caches for user:', validUserId);
-                }
-              } catch (error) {
-                console.error('💥 Error processing subscription webhook:', error);
-                // Don't throw - let webhook succeed to avoid retries
+              // Invalidate user caches
+              if (userId) {
+                invalidateUserCaches(userId);
+                clearUserDataCache(userId);
+                console.log('🗑️ Invalidated caches for user:', userId);
               }
             }
-          },
-        }),
-      ],
-    }),
-    dodopayments({
-      client: dodoPayments,
-      createCustomerOnSignUp: true,
-      use: [
-        dodocheckout({
-          products: [
-            {
-              productId:
-                process.env.NEXT_PUBLIC_PREMIUM_TIER ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_PREMIUM_TIER environment variable is required');
-                })(),
-              slug:
-                process.env.NEXT_PUBLIC_PREMIUM_SLUG ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_PREMIUM_SLUG environment variable is required');
-                })(),
-            },
-          ],
-          successUrl: '/success',
-          authenticatedUsersOnly: true,
-        }),
-        dodoportal(),
-        dodowebhooks({
-          webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
-          onPayload: async (payload) => {
-            const webhookPayload = payload;
-            console.log('🔔 Received Dodo Payments webhook:', webhookPayload.type);
-            console.log('📦 Payload data:', JSON.stringify(webhookPayload.data, null, 2));
-          },
-          onSubscriptionActive: async (payload) => {
-            console.log('🎯 Processing subscription.active webhook');
-            await handleSubscriptionWebhook(payload, 'active');
-          },
-          onSubscriptionOnHold: async (payload) => {
-            console.log('🎯 Processing subscription.on_hold webhook');
-            await handleSubscriptionWebhook(payload, 'on_hold');
-          },
-          onSubscriptionRenewed: async (payload) => {
-            console.log('🎯 Processing subscription.renewed webhook');
-            await handleSubscriptionWebhook(payload, 'active');
-          },
-          onSubscriptionPlanChanged: async (payload) => {
-            console.log('🎯 Processing subscription.plan_changed webhook');
-            await handleSubscriptionWebhook(payload, 'active');
-          },
-          onSubscriptionCancelled: async (payload) => {
-            console.log('🎯 Processing subscription.cancelled webhook');
-            await handleSubscriptionWebhook(payload, 'cancelled');
-          },
-          onSubscriptionFailed: async (payload) => {
-            console.log('🎯 Processing subscription.failed webhook');
-            await handleSubscriptionWebhook(payload, 'failed');
-          },
-          onSubscriptionExpired: async (payload) => {
-            console.log('🎯 Processing subscription.expired webhook');
-            await handleSubscriptionWebhook(payload, 'expired');
-          },
-        }),
-      ],
+          } catch (error) {
+            console.error('💥 Error processing Stripe subscription update:', error);
+          }
+        },
+      },
+      onEvent: async (event) => {
+        // Handle all Stripe webhook events
+        console.log('🔔 Received Stripe webhook:', event.type);
+        console.log('📦 Payload data:', JSON.stringify(event.data, null, 2));
+
+        // Handle subscription-specific events
+        if (event.type.startsWith('customer.subscription.')) {
+          await handleStripeSubscriptionEvent(event);
+        }
+      },
     }),
     nextCookies(),
   ],

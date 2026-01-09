@@ -42,7 +42,7 @@ export function InstallPrompt() {
           <div className="flex items-start justify-between gap-3">
             {/* App Icon */}
             <RovoLogo className="size-9" />
-            <div className="flex-grow">
+            <div className="grow">
               <p className="text-sm font-semibold text-foreground">Install Rovo on your device</p>
               <p className="mt-0.5 text-xs text-muted-foreground inline-flex items-center gap-1">
                 Tap <Share className="w-3 h-3 text-primary" /> then &quot;Add to Home Screen&quot;{' '}

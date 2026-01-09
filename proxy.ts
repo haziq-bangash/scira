@@ -17,12 +17,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // /api/auth/polar/webhooks
-  if (pathname.startsWith('/api/auth/polar/webhooks')) {
-    return NextResponse.next();
-  }
-
-  if (pathname.startsWith('/api/auth/dodopayments/webhooks')) {
+  // /api/auth/stripe/webhooks
+  if (pathname.startsWith('/api/auth/stripe/webhooks')) {
     return NextResponse.next();
   }
 

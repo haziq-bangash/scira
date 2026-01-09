@@ -805,7 +805,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <a
-                            href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Frovo"
+                            href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhaziqbangash%2Frovo"
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={closeMobileSidebar}

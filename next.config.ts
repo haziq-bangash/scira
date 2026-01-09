@@ -104,12 +104,12 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/raycast',
-        destination: 'https://www.raycast.com/zaidmukaddam/rovo',
+        destination: 'https://www.raycast.com/haziqbangash/rovo',
         permanent: true,
       },
       {
         source: '/plst',
-        destination: 'https://peerlist.io/zaidmukaddam/project/rovo-ai-30',
+        destination: 'https://peerlist.io/haziqbangash/project/rovo-ai-30',
         permanent: true,
       },
       {

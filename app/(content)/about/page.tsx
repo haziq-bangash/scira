@@ -25,14 +25,6 @@ import { PRICING, SEARCH_LIMITS } from '@/lib/constants';
 
 import { ThemeSwitcher } from '@/components/theme-switcher';
 import { RovoLogo } from '@/components/logos/scira-logo';
-import {
-  NavigationMenu,
-  NavigationMenuList,
-  NavigationMenuItem,
-  NavigationMenuTrigger,
-  NavigationMenuContent,
-  NavigationMenuLink,
-} from '@/components/ui/navigation-menu';
 import { getSearchGroups } from '@/lib/utils';
 
 export default function AboutPage() {
@@ -46,7 +38,7 @@ export default function AboutPage() {
   // Marketing hero: simple group selector (exclude Extreme)
   const visibleGroups = useMemo(
     () =>
-      getSearchGroups('parallel').filter(
+      getSearchGroups().filter(
         (g) => g.show && !['extreme', 'connectors', 'memory'].includes(g.id as string),
       ),
     [],
@@ -1068,7 +1060,7 @@ export default function AboutPage() {
                   <p className="text-sm font-medium text-foreground mb-1">Ready to get started?</p>
                   <p className="text-xs text-muted-foreground">
                     Have more questions?{' '}
-                    <a href="mailto:zaid@rovo.ai" className="text-primary hover:text-primary/80 transition-colors">
+                    <a href="mailto:haziqbangash@rovo.ai" className="text-primary hover:text-primary/80 transition-colors">
                       Contact us
                     </a>
                   </p>

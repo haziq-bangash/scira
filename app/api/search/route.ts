@@ -155,22 +155,17 @@ function initializeChatAndChecks({
   if (isProUser) {
     // Pro users: only validate ownership, skip usage checks
     criticalChecksPromise = Promise.all([fullUserPromise, validatedChatPromise]).then(([user]) => {
-      const hasPolarSubscription = !!user?.polarSubscription;
-      const hasDodoSubscription = !!user?.dodoSubscription?.hasSubscriptions;
-
       return {
         canProceed: true,
         isProUser: true,
         messageCount: 0,
         extremeSearchUsage: 0,
-        subscriptionData:
-          hasPolarSubscription || hasDodoSubscription
-            ? {
+        subscriptionData: user?.stripeSubscription
+          ? {
               hasSubscription: true,
-              subscription: user?.polarSubscription ? { ...user.polarSubscription, organizationId: null } : null,
-              dodoSubscription: user?.dodoSubscription || null,
+              subscription: user.stripeSubscription,
             }
-            : { hasSubscription: false },
+          : { hasSubscription: false },
         shouldBypassLimits: true,
       };
     });
@@ -200,22 +195,17 @@ function initializeChatAndChecks({
           throw new ChatSDKError('rate_limit:chat', 'Daily search limit reached');
         }
 
-        const hasPolarSubscription = !!user.polarSubscription;
-        const hasDodoSubscription = !!user.dodoSubscription?.hasSubscriptions;
-
         return {
           canProceed: true,
           isProUser: false,
           messageCount: messageCountResult.count,
           extremeSearchUsage: extremeSearchUsage.count,
-          subscriptionData:
-            hasPolarSubscription || hasDodoSubscription
-              ? {
+          subscriptionData: user.stripeSubscription
+            ? {
                 hasSubscription: true,
-                subscription: user.polarSubscription ? { ...user.polarSubscription, organizationId: null } : null,
-                dodoSubscription: user.dodoSubscription || null,
+                subscription: user.stripeSubscription,
               }
-              : { hasSubscription: false },
+            : { hasSubscription: false },
           shouldBypassLimits,
         };
       })

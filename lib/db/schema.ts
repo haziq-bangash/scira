@@ -10,6 +10,7 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
+  stripeCustomerId: text('stripe_customer_id'), // Stripe plugin field
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()
@@ -121,31 +122,25 @@ export const stream = pgTable('stream', {
   createdAt: timestamp('createdAt').notNull().defaultNow(),
 });
 
-// Subscription table for Polar webhook data
+// Subscription table for Stripe (Better Auth Stripe plugin)
 export const subscription = pgTable('subscription', {
+  // Better Auth Stripe Plugin Schema
+  // https://www.better-auth.com/docs/plugins/stripe#schema
   id: text('id').primaryKey(),
-  createdAt: timestamp('createdAt').notNull(),
-  modifiedAt: timestamp('modifiedAt'),
-  amount: integer('amount').notNull(),
-  currency: text('currency').notNull(),
-  recurringInterval: text('recurringInterval').notNull(),
-  status: text('status').notNull(),
-  currentPeriodStart: timestamp('currentPeriodStart').notNull(),
-  currentPeriodEnd: timestamp('currentPeriodEnd').notNull(),
-  cancelAtPeriodEnd: boolean('cancelAtPeriodEnd').notNull().default(false),
-  canceledAt: timestamp('canceledAt'),
-  startedAt: timestamp('startedAt').notNull(),
-  endsAt: timestamp('endsAt'),
-  endedAt: timestamp('endedAt'),
-  customerId: text('customerId').notNull(),
-  productId: text('productId').notNull(),
-  discountId: text('discountId'),
-  checkoutId: text('checkoutId').notNull(),
-  customerCancellationReason: text('customerCancellationReason'),
-  customerCancellationComment: text('customerCancellationComment'),
-  metadata: text('metadata'), // JSON string
-  customFieldData: text('customFieldData'), // JSON string
-  userId: text('userId').references(() => user.id),
+  plan: text('plan').notNull(), // Plan name (e.g., 'pro')
+  referenceId: text('referenceId').notNull(), // User ID or organization ID
+  stripeCustomerId: text('stripeCustomerId'), // Stripe customer ID
+  stripeSubscriptionId: text('stripeSubscriptionId'), // Stripe subscription ID
+  status: text('status').notNull().default('incomplete'), // Subscription status (active, canceled, etc.)
+  periodStart: timestamp('periodStart'), // Billing period start
+  periodEnd: timestamp('periodEnd'), // Billing period end
+  cancelAtPeriodEnd: boolean('cancelAtPeriodEnd').default(false), // Whether subscription will cancel at period end
+  cancelAt: timestamp('cancelAt'), // Scheduled cancellation time
+  canceledAt: timestamp('canceledAt'), // When cancellation was requested
+  endedAt: timestamp('endedAt'), // When subscription ended
+  seats: integer('seats'), // Number of seats for team plans
+  trialStart: timestamp('trialStart'), // Trial start date
+  trialEnd: timestamp('trialEnd'), // Trial end date
 });
 
 // Extreme search usage tracking table
@@ -202,8 +197,8 @@ export const userPreferences = pgTable('user_preferences', {
     .references(() => user.id, { onDelete: 'cascade' }),
   preferences: json('preferences')
     .$type<{
-      'rovo-search-provider'?: 'exa' | 'parallel' | 'tavily' | 'firecrawl';
-      'rovo-extreme-search-provider'?: 'exa' | 'parallel';
+      'rovo-search-provider'?: 'exa' | 'tavily' | 'firecrawl';
+      'rovo-extreme-search-provider'?: 'exa';
       'rovo-group-order'?: string[];
       'rovo-model-order-global'?: string[];
       'rovo-blur-personal-info'?: boolean;

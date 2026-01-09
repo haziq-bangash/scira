@@ -1,14 +1,12 @@
 import 'server-only';
 
 import { eq, and, desc } from 'drizzle-orm';
-import { subscription, dodosubscription, user } from './db/schema';
-import { getReadReplica, maindb } from './db';
+import { subscription, user } from './db/schema';
+import { getReadReplica } from './db';
 import { auth } from './auth';
 import { headers } from 'next/headers';
-import { getDodoSubscriptionExpirationInfo } from './db/queries';
 import { getCustomInstructionsByUserId, getUserPreferencesByUserId } from './db/queries';
 import type { CustomInstructions, UserPreferences } from './db/schema';
-import { getDodoProStatus, setDodoProStatus } from './performance-cache';
 
 // Single comprehensive user data type
 export type ComprehensiveUserData = {
@@ -17,33 +15,22 @@ export type ComprehensiveUserData = {
   emailVerified: boolean;
   name: string;
   image: string | null;
+  stripeCustomerId: string | null;
   createdAt: Date;
   updatedAt: Date;
   isProUser: boolean;
-  proSource: 'polar' | 'dodo' | 'none';
   subscriptionStatus: 'active' | 'canceled' | 'expired' | 'none';
-  polarSubscription?: {
+  stripeSubscription?: {
     id: string;
-    productId: string;
+    plan: string;
     status: string;
-    amount: number;
-    currency: string;
-    recurringInterval: string;
-    currentPeriodStart: Date;
-    currentPeriodEnd: Date;
+    periodStart: Date;
+    periodEnd: Date;
     cancelAtPeriodEnd: boolean;
+    cancelAt: Date | null;
     canceledAt: Date | null;
+    endedAt: Date | null;
   };
-  dodoSubscription?: {
-    hasSubscriptions: boolean;
-    expiresAt: Date | null;
-    mostRecentSubscription?: Date;
-    daysUntilExpiration?: number;
-    isExpired: boolean;
-    isExpiringSoon: boolean;
-  };
-  // Subscription history
-  subscriptionHistory: any[];
 };
 
 // Lightweight user auth type for fast checks
@@ -240,66 +227,23 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
         userId: user.id,
         email: user.email,
         subscriptionStatus: subscription.status,
-        subscriptionEnd: subscription.currentPeriodEnd,
+        subscriptionEnd: subscription.periodEnd,
       })
       .from(user)
-      .leftJoin(subscription, eq(subscription.userId, user.id))
+      .leftJoin(subscription, eq(subscription.referenceId, user.id))
       .where(eq(user.id, userId));
 
     if (!result || result.length === 0) {
       return null;
     }
 
-    // Check for active Polar subscription (quick check)
-    const hasActivePolarSub = result.some((row) => row.subscriptionStatus === 'active');
-
-    // For Dodo Subscriptions, check cache first, then DB only if needed
-    let isDodoActive = false;
-
-    if (!hasActivePolarSub) {
-      // Check cache first (fast path)
-      const cachedDodoStatus = getDodoProStatus(userId);
-      if (cachedDodoStatus !== null) {
-        // Backward compatibility: handle both old (hasSubscriptions) and new (isProUser) cache formats
-        isDodoActive = cachedDodoStatus.isProUser ?? cachedDodoStatus.hasSubscriptions ?? false;
-      } else {
-        // Cache miss: query DB (use maindb to avoid replication lag)
-        const recentDodoSubscription = await maindb
-          .select({
-            createdAt: dodosubscription.createdAt,
-            currentPeriodEnd: dodosubscription.currentPeriodEnd,
-            status: dodosubscription.status,
-            cancelAtPeriodEnd: dodosubscription.cancelAtPeriodEnd,
-          })
-          .from(dodosubscription)
-          .where(eq(dodosubscription.userId, userId))
-          .orderBy(desc(dodosubscription.createdAt))
-          .limit(1);
-
-        if (recentDodoSubscription.length > 0) {
-          const sub = recentDodoSubscription[0];
-          const now = new Date();
-          const periodEnd = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : null;
-          const isWithinPeriod = !periodEnd || periodEnd > now;
-
-          // Check if subscription is active or cancelled but still within period
-          if (
-            (sub.status === 'active' || (sub.status === 'cancelled' && sub.cancelAtPeriodEnd === true)) &&
-            isWithinPeriod
-          ) {
-            isDodoActive = true;
-          }
-        }
-
-        // Cache the result for next time
-        setDodoProStatus(userId, { isProUser: isDodoActive, hasSubscriptions: isDodoActive });
-      }
-    }
+    // Check for active Stripe subscription
+    const hasActiveStripeSub = result.some((row) => row.subscriptionStatus === 'active');
 
     const lightweightData: LightweightUserAuth = {
       userId: result[0].userId,
       email: result[0].email,
-      isProUser: hasActivePolarSub || isDodoActive,
+      isProUser: hasActiveStripeSub,
     };
 
     // Cache the result
@@ -343,23 +287,22 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         emailVerified: user.emailVerified,
         name: user.name,
         image: user.image,
+        stripeCustomerId: user.stripeCustomerId,
         userCreatedAt: user.createdAt,
         userUpdatedAt: user.updatedAt,
         // Subscription fields (will be null if no subscription)
         subscriptionId: subscription.id,
-        subscriptionCreatedAt: subscription.createdAt,
+        subscriptionPlan: subscription.plan,
         subscriptionStatus: subscription.status,
-        subscriptionAmount: subscription.amount,
-        subscriptionCurrency: subscription.currency,
-        subscriptionRecurringInterval: subscription.recurringInterval,
-        subscriptionCurrentPeriodStart: subscription.currentPeriodStart,
-        subscriptionCurrentPeriodEnd: subscription.currentPeriodEnd,
+        subscriptionPeriodStart: subscription.periodStart,
+        subscriptionPeriodEnd: subscription.periodEnd,
         subscriptionCancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+        subscriptionCancelAt: subscription.cancelAt,
         subscriptionCanceledAt: subscription.canceledAt,
-        subscriptionProductId: subscription.productId,
+        subscriptionEndedAt: subscription.endedAt,
       })
       .from(user)
-      .leftJoin(subscription, eq(subscription.userId, user.id))
+      .leftJoin(subscription, eq(subscription.referenceId, user.id))
       .where(eq(user.id, userId));
 
     if (!userWithSubscriptions || userWithSubscriptions.length === 0) {
@@ -368,121 +311,46 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
 
     const userData = userWithSubscriptions[0];
 
-    // Fetch Dodo subscription data separately with optimized query
-    // IMPORTANT: Use maindb for critical subscription queries to avoid replication lag
-    const dodoSubscriptions = await maindb
-      .select({
-        id: dodosubscription.id,
-        createdAt: dodosubscription.createdAt,
-        status: dodosubscription.status,
-        amount: dodosubscription.amount,
-        currency: dodosubscription.currency,
-        interval: dodosubscription.interval,
-        intervalCount: dodosubscription.intervalCount,
-        currentPeriodStart: dodosubscription.currentPeriodStart,
-        currentPeriodEnd: dodosubscription.currentPeriodEnd,
-        cancelledAt: dodosubscription.cancelledAt,
-        cancelAtPeriodEnd: dodosubscription.cancelAtPeriodEnd,
-        endedAt: dodosubscription.endedAt,
-        productId: dodosubscription.productId,
-      })
-      .from(dodosubscription)
-      .where(eq(dodosubscription.userId, userId));
-
-    // Calculate expiration info from subscriptions
-    const dodoExpirationInfo = await getDodoSubscriptionExpirationInfo({ userId });
-
-    // Process Polar subscriptions from the joined data
-    const polarSubscriptions = userWithSubscriptions
+    // Process Stripe subscriptions from the joined data
+    const stripeSubscriptions = userWithSubscriptions
       .filter((row) => row.subscriptionId !== null)
       .map((row) => ({
         id: row.subscriptionId!,
-        createdAt: row.subscriptionCreatedAt!,
+        plan: row.subscriptionPlan!,
         status: row.subscriptionStatus!,
-        amount: row.subscriptionAmount!,
-        currency: row.subscriptionCurrency!,
-        recurringInterval: row.subscriptionRecurringInterval!,
-        currentPeriodStart: row.subscriptionCurrentPeriodStart!,
-        currentPeriodEnd: row.subscriptionCurrentPeriodEnd!,
-        cancelAtPeriodEnd: row.subscriptionCancelAtPeriodEnd!,
+        periodStart: row.subscriptionPeriodStart!,
+        periodEnd: row.subscriptionPeriodEnd!,
+        cancelAtPeriodEnd: row.subscriptionCancelAtPeriodEnd ?? false,
+        cancelAt: row.subscriptionCancelAt,
         canceledAt: row.subscriptionCanceledAt,
-        productId: row.subscriptionProductId!,
+        endedAt: row.subscriptionEndedAt,
       }));
 
-    // Process Polar subscription
-    const activePolarSubscription = polarSubscriptions
+    // Get active Stripe subscription (sort by period end to get the most current one)
+    const activeStripeSubscription = stripeSubscriptions
       .filter((sub) => sub.status === 'active')
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+      .sort((a, b) => new Date(b.periodEnd).getTime() - new Date(a.periodEnd).getTime())[0];
 
-    // Process Dodo Subscriptions
-    // Include both active subscriptions and cancelled subscriptions that are still within their paid period
-    const now = new Date();
-    const activeDodoSubscriptions = dodoSubscriptions
-      .filter((sub: any) => {
-        const periodEnd = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : null;
-        const isWithinPeriod = !periodEnd || periodEnd > now;
-
-        // Active subscription
-        if (sub.status === 'active' && isWithinPeriod) {
-          return true;
-        }
-
-        // Cancelled but still within paid period
-        if (
-          sub.status === 'cancelled' &&
-          sub.cancelAtPeriodEnd === true &&
-          isWithinPeriod
-        ) {
-          return true;
-        }
-
-        return false;
-      })
-      .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    const hasDodoSubscriptions = activeDodoSubscriptions.length > 0;
-    let isDodoActive = false;
-
-    if (hasDodoSubscriptions) {
-      const mostRecentSubscription = activeDodoSubscriptions[0];
-      // Check if subscription is still within its period
-      if (mostRecentSubscription.currentPeriodEnd) {
-        isDodoActive = new Date(mostRecentSubscription.currentPeriodEnd) > now;
-      } else {
-        // If no end date, consider it active
-        isDodoActive = true;
-      }
-    }
-
-    // Determine overall Pro status and source
-    let isProUser = false;
-    let proSource: 'polar' | 'dodo' | 'none' = 'none';
+    // Determine Pro status
+    const isProUser = Boolean(activeStripeSubscription);
     let subscriptionStatus: 'active' | 'canceled' | 'expired' | 'none' = 'none';
 
-    if (activePolarSubscription) {
-      isProUser = true;
-      proSource = 'polar';
+    if (activeStripeSubscription) {
       subscriptionStatus = 'active';
-    } else if (isDodoActive) {
-      isProUser = true;
-      proSource = 'dodo';
-      subscriptionStatus = 'active';
-    } else {
-      // Check for expired/canceled Polar subscriptions
-      const latestPolarSubscription = polarSubscriptions.sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    } else if (stripeSubscriptions.length > 0) {
+      // Check for expired/canceled Stripe subscriptions
+      const latestStripeSubscription = stripeSubscriptions.sort(
+        (a, b) => new Date(b.periodEnd).getTime() - new Date(a.periodEnd).getTime(),
       )[0];
 
-      if (latestPolarSubscription) {
-        const now = new Date();
-        const isExpired = new Date(latestPolarSubscription.currentPeriodEnd) < now;
-        const isCanceled = latestPolarSubscription.status === 'canceled';
+      const now = new Date();
+      const isExpired = new Date(latestStripeSubscription.periodEnd) < now;
+      const isCanceled = latestStripeSubscription.status === 'canceled';
 
-        if (isCanceled) {
-          subscriptionStatus = 'canceled';
-        } else if (isExpired) {
-          subscriptionStatus = 'expired';
-        }
+      if (isCanceled) {
+        subscriptionStatus = 'canceled';
+      } else if (isExpired) {
+        subscriptionStatus = 'expired';
       }
     }
 
@@ -493,39 +361,25 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       emailVerified: userData.emailVerified,
       name: userData.name || userData.email.split('@')[0], // Fallback to email prefix if name is null
       image: userData.image,
+      stripeCustomerId: userData.stripeCustomerId,
       createdAt: userData.userCreatedAt,
       updatedAt: userData.userUpdatedAt,
       isProUser,
-      proSource,
       subscriptionStatus,
-      subscriptionHistory: dodoSubscriptions,
     };
 
-    // Add Polar subscription details if exists
-    if (activePolarSubscription) {
-      comprehensiveData.polarSubscription = {
-        id: activePolarSubscription.id,
-        productId: activePolarSubscription.productId,
-        status: activePolarSubscription.status,
-        amount: activePolarSubscription.amount,
-        currency: activePolarSubscription.currency,
-        recurringInterval: activePolarSubscription.recurringInterval,
-        currentPeriodStart: activePolarSubscription.currentPeriodStart,
-        currentPeriodEnd: activePolarSubscription.currentPeriodEnd,
-        cancelAtPeriodEnd: activePolarSubscription.cancelAtPeriodEnd,
-        canceledAt: activePolarSubscription.canceledAt,
-      };
-    }
-
-    // Always add Dodo Subscription details if user has any subscriptions or dodo pro status
-    if (dodoSubscriptions.length > 0 || proSource === 'dodo') {
-      comprehensiveData.dodoSubscription = {
-        hasSubscriptions: hasDodoSubscriptions,
-        expiresAt: dodoExpirationInfo?.expirationDate || null,
-        mostRecentSubscription: hasDodoSubscriptions ? activeDodoSubscriptions[0].createdAt : undefined,
-        daysUntilExpiration: dodoExpirationInfo?.daysUntilExpiration,
-        isExpired: dodoExpirationInfo?.isExpired || false,
-        isExpiringSoon: dodoExpirationInfo?.isExpiringSoon || false,
+    // Add Stripe subscription details if exists
+    if (activeStripeSubscription) {
+      comprehensiveData.stripeSubscription = {
+        id: activeStripeSubscription.id,
+        plan: activeStripeSubscription.plan,
+        status: activeStripeSubscription.status,
+        periodStart: activeStripeSubscription.periodStart,
+        periodEnd: activeStripeSubscription.periodEnd,
+        cancelAtPeriodEnd: activeStripeSubscription.cancelAtPeriodEnd,
+        cancelAt: activeStripeSubscription.cancelAt,
+        canceledAt: activeStripeSubscription.canceledAt,
+        endedAt: activeStripeSubscription.endedAt,
       };
     }
 
@@ -548,9 +402,4 @@ export async function isUserPro(): Promise<boolean> {
 export async function getUserSubscriptionStatus(): Promise<'active' | 'canceled' | 'expired' | 'none'> {
   const userData = await getComprehensiveUserData();
   return userData?.subscriptionStatus || 'none';
-}
-
-export async function getProSource(): Promise<'polar' | 'dodo' | 'none'> {
-  const userData = await getComprehensiveUserData();
-  return userData?.proSource || 'none';
 }

@@ -301,64 +301,23 @@ class ExaSearchStrategy implements SearchProviderStrategy {
   }
 }
 
-// Parallel search strategy
-class ParallelSearchStrategyForExtreme implements SearchProviderStrategy {
-  constructor(private parallel: Parallel) {}
-
-  async search(query: string, category?: SearchCategory, include_domains?: string[]): Promise<SearchResult[]> {
-    console.log(`[Parallel] searchWeb called with query: "${query}", category: ${category}`);
-    try {
-      const response = await this.parallel.beta.search({
-        objective: query,
-        mode: 'agentic',
-        max_results: 5,
-        max_chars_per_result: 2000,
-        source_policy: {
-          include_domains: include_domains || [],
-        },
-      });
-
-      console.log(`[Parallel] searchWeb received ${response.results?.length || 0} results from Parallel API`);
-
-      const mappedResults = (response.results || []).map((r) => ({
-        title: r.title || '',
-        url: r.url,
-        content: Array.isArray(r.excerpts)
-          ? r.excerpts.join(' ').substring(0, 1000)
-          : (r.excerpts as unknown as string[]).join(' ').substring(0, 1000),
-        publishedDate: '',
-        favicon: `https://www.google.com/s2/favicons?domain=${new URL(r.url).hostname}&sz=128`,
-      })) as SearchResult[];
-
-      console.log(`[Parallel] searchWeb returning ${mappedResults.length} results`);
-      return mappedResults;
-    } catch (error) {
-      console.error('[Parallel] Error in searchWeb:', error);
-      return [];
-    }
-  }
-}
-
 async function extremeSearch(
   prompt: string,
   dataStream: UIMessageStreamWriter<ChatMessage> | undefined,
-  contentProvider: 'exa' | 'parallel' = 'exa',
+  contentProvider: 'exa' = 'exa',
 ): Promise<Research> {
   const allSources: SearchResult[] = [];
 
   // Initialize clients
   const exa = new Exa(serverEnv.EXA_API_KEY);
-  const parallel = new Parallel({ apiKey: serverEnv.PARALLEL_API_KEY });
   const firecrawl = new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY });
 
   // Create search and content extraction strategies based on provider
   const searchStrategy: SearchProviderStrategy =
-    contentProvider === 'parallel' ? new ParallelSearchStrategyForExtreme(parallel) : new ExaSearchStrategy(exa);
+    new ExaSearchStrategy(exa);
 
   const contentStrategy: ContentExtractionStrategy =
-    contentProvider === 'parallel'
-      ? new ParallelContentStrategy(parallel, firecrawl)
-      : new ExaContentStrategy(exa, firecrawl);
+    new ExaContentStrategy(exa, firecrawl);
 
   console.log(`[ExtremeSearch] Using ${contentProvider} as search and content extraction provider`);
 
@@ -908,7 +867,7 @@ ${JSON.stringify(plan)}
 
 export function extremeSearchTool(
   dataStream: UIMessageStreamWriter<ChatMessage> | undefined,
-  contentProvider: 'exa' | 'parallel' = 'exa',
+  contentProvider: 'exa' = 'exa',
 ) {
   return tool({
     description: `Use this tool to conduct an extreme search on a given topic. Using ${contentProvider} for content extraction.`,

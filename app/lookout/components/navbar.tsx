@@ -50,10 +50,10 @@ export function Navbar({ user, isProUser, isProStatusLoading, showProBadge = fal
         <UserProfile
           user={user || null}
           subscriptionData={
-            user?.polarSubscription
+            user?.stripeSubscription
               ? {
-                  hasSubscription: true,
-                  subscription: user.polarSubscription,
+                hasSubscription: true,
+                subscription: user.stripeSubscription,
                 }
               : { hasSubscription: false }
           }

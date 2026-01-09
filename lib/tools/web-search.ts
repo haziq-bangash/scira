@@ -4,7 +4,6 @@ import Exa from 'exa-js';
 import { serverEnv } from '@/env/server';
 import { UIMessageStreamWriter } from 'ai';
 import { ChatMessage } from '../types';
-import Parallel from 'parallel-web';
 import FirecrawlApp, { SearchResultWeb, SearchResultNews, SearchResultImages, Document } from '@mendable/firecrawl-js';
 import { tavily, type TavilyClient } from '@tavily/core';
 
@@ -99,157 +98,6 @@ interface SearchStrategy {
       dataStream?: UIMessageStreamWriter<ChatMessage>;
     },
   ): Promise<{ searches: Array<{ query: string; results: any[]; images: any[] }> }>;
-}
-
-// Parallel AI search strategy
-class ParallelSearchStrategy implements SearchStrategy {
-  constructor(
-    private parallel: Parallel,
-    private firecrawl: FirecrawlApp,
-  ) {}
-
-  async search(
-    queries: string[],
-    options: {
-      maxResults: number[];
-      topics: ('general' | 'news')[];
-      quality: ('default' | 'best')[];
-      dataStream?: UIMessageStreamWriter<ChatMessage>;
-    },
-  ) {
-    // Limit queries to first 5 for Parallel AI
-    const limitedQueries = queries.slice(0, 5);
-    console.log('Using Parallel AI batch processing for queries:', limitedQueries);
-
-    // Send start notifications for all queries
-    limitedQueries.forEach((query, index) => {
-      options.dataStream?.write({
-        type: 'data-query_completion',
-        data: {
-          query,
-          index,
-          total: limitedQueries.length,
-          status: 'started',
-          resultsCount: 0,
-          imagesCount: 0,
-        },
-      });
-    });
-
-    try {
-      const perQueryPromises = limitedQueries.map(async (query, index) => {
-        const currentQuality = options.quality[index] || options.quality[0] || 'default';
-        const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
-
-        try {
-          // Run Parallel AI search and Firecrawl images concurrently per query
-          const [singleResponse, firecrawlImages] = await Promise.all([
-            this.parallel.beta.search({
-              objective: query,
-              mode: currentQuality === 'best' ? 'agentic' : 'one-shot',
-              max_results: Math.max(currentMaxResults, 10),
-              excerpts: {
-                max_chars_per_result: 5000,
-              },
-              fetch_policy: {
-                max_age_seconds: 3600,
-                timeout_seconds: 120,
-              },
-            }),
-            this.firecrawl
-              .search(query, {
-                sources: ['images'],
-                limit: 3,
-                scrapeOptions: {
-                  storeInCache: true,
-                },
-              })
-              .catch((error) => {
-                console.error(`Firecrawl error for query "${query}":`, error);
-                return { images: [] } as Partial<Document> as any;
-              }),
-          ]);
-
-          const results = (singleResponse?.results || []).map((result: any) => ({
-            url: result.url,
-            title: cleanTitle(result.title || ''),
-            content: Array.isArray(result.excerpts)
-              ? result.excerpts.join(' ').substring(0, 1000)
-              : (result.content || '').substring(0, 1000),
-            published_date: undefined,
-            author: undefined,
-          }));
-
-          const images = ((firecrawlImages as any)?.images || [])
-            .filter(isSearchResultImages)
-            .map((item: any) => ({
-              url: getImageUrl(item) || '',
-              description: cleanTitle(item.title || ''),
-            }))
-            .filter((item: any) => item.url);
-
-          // Send completion notification
-          options.dataStream?.write({
-            type: 'data-query_completion',
-            data: {
-              query,
-              index,
-              total: limitedQueries.length,
-              status: 'completed',
-              resultsCount: results.length,
-              imagesCount: images.length,
-            },
-          });
-
-          return {
-            query,
-            results: deduplicateByDomainAndUrl(results),
-            images: deduplicateByDomainAndUrl(images),
-          };
-        } catch (error) {
-          console.error(`Parallel AI search error for query "${query}":`, error);
-
-          options.dataStream?.write({
-            type: 'data-query_completion',
-            data: {
-              query,
-              index,
-              total: limitedQueries.length,
-              status: 'error',
-              resultsCount: 0,
-              imagesCount: 0,
-            },
-          });
-
-          return { query, results: [], images: [] };
-        }
-      });
-
-      const searchResults = await Promise.all(perQueryPromises);
-      return { searches: searchResults };
-    } catch (error) {
-      console.error('Parallel AI batch orchestration error:', error);
-
-      // Send error notifications for all queries
-      limitedQueries.forEach((query, index) => {
-        options.dataStream?.write({
-          type: 'data-query_completion',
-          data: {
-            query,
-            index,
-            total: limitedQueries.length,
-            status: 'error',
-            resultsCount: 0,
-            imagesCount: 0,
-          },
-        });
-      });
-
-      return {
-        searches: limitedQueries.map((query) => ({ query, results: [], images: [] })),
-      };
-    }
-  }
 }
 
 // Tavily search strategy
@@ -611,16 +459,14 @@ class ExaSearchStrategy implements SearchStrategy {
 
 // Search provider factory
 const createSearchStrategy = (
-  provider: 'exa' | 'parallel' | 'tavily' | 'firecrawl',
+  provider: 'exa' | 'tavily' | 'firecrawl',
   clients: {
     exa: Exa;
-    parallel: Parallel;
     firecrawl: FirecrawlApp;
     tvly: TavilyClient;
   },
 ): SearchStrategy => {
   const strategies = {
-    parallel: () => new ParallelSearchStrategy(clients.parallel, clients.firecrawl),
     tavily: () => new TavilySearchStrategy(clients.tvly),
     firecrawl: () => new FirecrawlSearchStrategy(clients.firecrawl),
     exa: () => new ExaSearchStrategy(clients.exa),
@@ -631,12 +477,11 @@ const createSearchStrategy = (
 
 export function webSearchTool(
   dataStream?: UIMessageStreamWriter<ChatMessage> | undefined,
-  searchProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl' = 'exa',
+  searchProvider: 'exa' | 'tavily' | 'firecrawl' = 'exa',
 ) {
   return tool({
     description: `This is the default tool of the app to be used to search the web for information with multiple queries(5-10), max results(15-20), topics, and quality.
     Very important Rules:
-    ...${searchProvider === 'parallel' ? 'The First Query should be the objective and the rest of the queries should be related to the objective' : ''}...
     - The queries should always be in the same language as the user's message.
     - And count of the queries should be 5-10 always!
     - Assert to max number of results for each query to be 15-20.
@@ -696,7 +541,6 @@ export function webSearchTool(
       // Initialize all clients
       const clients = {
         exa: new Exa(serverEnv.EXA_API_KEY),
-        parallel: new Parallel({ apiKey: serverEnv.PARALLEL_API_KEY }),
         firecrawl: new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY }),
         tvly: tavily({ apiKey: serverEnv.TAVILY_API_KEY }),
       };

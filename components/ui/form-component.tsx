@@ -244,64 +244,39 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       if (discountConfig) return; // Already fetched
 
       try {
-        const config = await getDiscountConfigAction({
-          isIndianUser: location.isIndia,
-        });
+        const config = await getDiscountConfigAction();
         setDiscountConfig(config as DiscountConfig);
       } catch (error) {
         console.error('Failed to fetch discount config:', error);
       }
-    }, [discountConfig, location.isIndia]);
+    }, [discountConfig]);
 
-    // Calculate pricing with student discounts
+    // Calculate pricing with student discounts (Stripe handles currency conversion)
     const calculatePricing = useCallback(() => {
       const defaultUSDPrice = PRICING.PRO_MONTHLY;
-      const defaultINRPrice = PRICING.PRO_MONTHLY_INR;
 
       // Check if student discount is active
       if (!discountConfig || !discountConfig.enabled || !discountConfig.isStudentDiscount) {
         return {
-          usd: { originalPrice: defaultUSDPrice, finalPrice: defaultUSDPrice, hasDiscount: false },
-          inr: location.isIndia
-            ? { originalPrice: defaultINRPrice, finalPrice: defaultINRPrice, hasDiscount: false }
-            : null,
-        };
-      }
-
-      // USD pricing with student discount
-      const usdPricing = discountConfig.finalPrice
-        ? {
-          originalPrice: defaultUSDPrice,
-          finalPrice: discountConfig.finalPrice,
-          hasDiscount: true,
-        }
-        : {
           originalPrice: defaultUSDPrice,
           finalPrice: defaultUSDPrice,
           hasDiscount: false,
         };
-
-      // INR pricing with student discount - show if available in discount config
-      let inrPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } | null = null;
-      if (discountConfig.inrPrice || location.isIndia) {
-        inrPricing = discountConfig.inrPrice
-          ? {
-            originalPrice: defaultINRPrice,
-            finalPrice: discountConfig.inrPrice,
-            hasDiscount: true,
-          }
-          : {
-            originalPrice: defaultINRPrice,
-            finalPrice: defaultINRPrice,
-            hasDiscount: false,
-          };
       }
 
-      return {
-        usd: usdPricing,
-        inr: inrPricing,
-      };
-    }, [discountConfig, location.isIndia]);
+      // USD pricing with student discount (Stripe handles conversion to user's currency)
+      return discountConfig.finalPrice
+        ? {
+            originalPrice: defaultUSDPrice,
+            finalPrice: discountConfig.finalPrice,
+            hasDiscount: true,
+          }
+        : {
+            originalPrice: defaultUSDPrice,
+            finalPrice: defaultUSDPrice,
+            hasDiscount: false,
+          };
+    }, [discountConfig]);
 
     const pricing = calculatePricing();
 
@@ -1073,21 +1048,14 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                       </div>
                     )}
                     <div className="flex items-center gap-2">
-                      {pricing.inr ? (
-                        // Show INR pricing when available
-                        (pricing.inr.hasDiscount ? (<>
-                          <span className="text-lg text-white/60 line-through">₹{pricing.inr.originalPrice}</span>
-                          <span className="text-2xl font-bold">₹{pricing.inr.finalPrice}</span>
-                        </>) : (<span className="text-2xl font-bold">₹{pricing.inr.finalPrice}</span>))
-                      ) : // Show USD pricing for non-Indian users
-                        pricing.usd.hasDiscount ? (
-                          <>
-                            <span className="text-lg text-white/60 line-through">${pricing.usd.originalPrice}</span>
-                            <span className="text-2xl font-bold">${pricing.usd.finalPrice.toFixed(2)}</span>
-                          </>
-                        ) : (
-                          <span className="text-2xl font-bold">${pricing.usd.finalPrice}</span>
-                        )}
+                      {pricing.hasDiscount ? (
+                        <>
+                          <span className="text-lg text-white/60 line-through">${pricing.originalPrice}</span>
+                          <span className="text-2xl font-bold">${pricing.finalPrice.toFixed(2)}</span>
+                        </>
+                      ) : (
+                        <span className="text-2xl font-bold">${pricing.finalPrice}</span>
+                      )}
                       <span className="text-sm text-white/80">/month</span>
                     </div>
                     <p className="text-sm text-white/80 text-left mt-2">
@@ -1673,11 +1641,6 @@ const WEB_SEARCH_PROVIDERS: Array<{
       value: 'firecrawl',
       label: 'Firecrawl',
       description: 'Web, news, and image search with content scraping capabilities.',
-    },
-    {
-      value: 'parallel',
-      label: 'Parallel AI',
-      description: 'Base and premium web search with Parallel’s Firecrawl image support.',
     },
     {
       value: 'tavily',
@@ -2414,64 +2377,39 @@ const FormComponent: React.FC<FormComponentProps> = ({
     if (discountConfig) return; // Already fetched
 
     try {
-      const config = await getDiscountConfigAction({
-        isIndianUser: location.isIndia,
-      });
+      const config = await getDiscountConfigAction();
       setDiscountConfig(config as DiscountConfig);
     } catch (error) {
       console.error('Failed to fetch discount config:', error);
     }
-  }, [discountConfig, location.isIndia]);
+  }, [discountConfig]);
 
-  // Calculate pricing with student discounts
+  // Calculate pricing with student discounts (Stripe handles currency conversion)
   const calculatePricing = useCallback(() => {
     const defaultUSDPrice = PRICING.PRO_MONTHLY;
-    const defaultINRPrice = PRICING.PRO_MONTHLY_INR;
 
     // Check if student discount is active
     if (!discountConfig || !discountConfig.enabled || !discountConfig.isStudentDiscount) {
       return {
-        usd: { originalPrice: defaultUSDPrice, finalPrice: defaultUSDPrice, hasDiscount: false },
-        inr: location.isIndia
-          ? { originalPrice: defaultINRPrice, finalPrice: defaultINRPrice, hasDiscount: false }
-          : null,
-      };
-    }
-
-    // USD pricing with student discount
-    const usdPricing = discountConfig.finalPrice
-      ? {
-        originalPrice: defaultUSDPrice,
-        finalPrice: discountConfig.finalPrice,
-        hasDiscount: true,
-      }
-      : {
         originalPrice: defaultUSDPrice,
         finalPrice: defaultUSDPrice,
         hasDiscount: false,
       };
-
-    // INR pricing with student discount - show if available in discount config
-    let inrPricing: { originalPrice: number; finalPrice: number; hasDiscount: boolean } | null = null;
-    if (discountConfig.inrPrice || location.isIndia) {
-      inrPricing = discountConfig.inrPrice
-        ? {
-          originalPrice: defaultINRPrice,
-          finalPrice: discountConfig.inrPrice,
-          hasDiscount: true,
-        }
-        : {
-          originalPrice: defaultINRPrice,
-          finalPrice: defaultINRPrice,
-          hasDiscount: false,
-        };
     }
 
-    return {
-      usd: usdPricing,
-      inr: inrPricing,
-    };
-  }, [discountConfig, location.isIndia]);
+    // USD pricing with student discount (Stripe handles conversion to user's currency)
+    return discountConfig.finalPrice
+      ? {
+          originalPrice: defaultUSDPrice,
+          finalPrice: discountConfig.finalPrice,
+          hasDiscount: true,
+        }
+      : {
+          originalPrice: defaultUSDPrice,
+          finalPrice: defaultUSDPrice,
+          hasDiscount: false,
+        };
+  }, [discountConfig]);
 
   const pricing = calculatePricing();
 
@@ -4097,21 +4035,14 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       </div>
                     )}
                     <div className="flex items-center gap-2 mb-2">
-                      {pricing.inr ? (
-                        // Show INR pricing when available
-                        (pricing.inr.hasDiscount ? (<>
-                          <span className="text-lg text-white/60 line-through">₹{pricing.inr.originalPrice}</span>
-                          <span className="text-2xl font-bold">₹{pricing.inr.finalPrice}</span>
-                        </>) : (<span className="text-2xl font-bold">₹{pricing.inr.finalPrice}</span>))
-                      ) : // Show USD pricing for non-Indian users
-                        pricing.usd.hasDiscount ? (
-                          <>
-                            <span className="text-lg text-white/60 line-through">${pricing.usd.originalPrice}</span>
-                            <span className="text-2xl font-bold">${pricing.usd.finalPrice.toFixed(2)}</span>
-                          </>
-                        ) : (
-                          <span className="text-2xl font-bold">${pricing.usd.finalPrice}</span>
-                        )}
+                      {pricing.hasDiscount ? (
+                        <>
+                          <span className="text-lg text-white/60 line-through">${pricing.originalPrice}</span>
+                          <span className="text-2xl font-bold">${pricing.finalPrice.toFixed(2)}</span>
+                        </>
+                      ) : (
+                        <span className="text-2xl font-bold">${pricing.finalPrice}</span>
+                      )}
                       <span className="text-sm text-white/80">/month</span>
                     </div>
                     <p className="text-sm text-white/80 text-left">

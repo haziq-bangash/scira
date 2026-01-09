@@ -3,7 +3,6 @@ import { z } from 'zod';
 import Exa from 'exa-js';
 import { serverEnv } from '@/env/server';
 import FirecrawlApp from '@mendable/firecrawl-js';
-import Parallel from 'parallel-web';
 import { Supadata } from '@supadata/js';
 
 // Content type enum for different sources
@@ -203,7 +202,6 @@ function formatSupadataResponse(metadata: SupadataMetadata, url: string, transcr
 
 const supadata = new Supadata({ apiKey: serverEnv.SUPADATA_API_KEY });
 const exa = new Exa(serverEnv.EXA_API_KEY as string);
-const parallel = new Parallel({ apiKey: serverEnv.PARALLEL_API_KEY });
 const firecrawl = new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY });
 
 // Helper function to retrieve content from a single URL
@@ -412,48 +410,6 @@ async function retrieveSingleUrl(
       console.error('Exa AI error:', exaError);
       console.log('Falling back to Parallel');
       usingParallel = true;
-    }
-
-    if (usingParallel) {
-      try {
-        console.log(`Trying Parallel extract for ${url}`);
-        const parallelResult = await parallel.beta.extract({
-          urls: [url],
-          excerpts: false,
-          full_content: true,
-        });
-
-        if (parallelResult.results && parallelResult.results.length > 0) {
-          const extractResult = parallelResult.results[0];
-          if (extractResult.full_content) {
-            console.log(`Parallel successfully extracted ${url}`);
-            source = 'parallel';
-            return {
-              url,
-              result: {
-                url: url,
-                content: extractResult.full_content,
-                title: extractResult.title || url.split('/').pop() || 'Retrieved Content',
-                description: extractResult.full_content.slice(0, 200) + '...',
-                author: undefined,
-                publishedDate: extractResult.publish_date || undefined,
-                image: undefined,
-                favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`,
-                language: 'en',
-              },
-              source,
-              response_time: (Date.now() - start) / 1000,
-            };
-          }
-        }
-
-        console.log('Parallel returned no content, falling back to Firecrawl');
-        usingFirecrawl = true;
-      } catch (parallelError) {
-        console.error('Parallel error:', parallelError);
-        console.log('Falling back to Firecrawl');
-        usingFirecrawl = true;
-      }
     }
 
     if (usingFirecrawl) {

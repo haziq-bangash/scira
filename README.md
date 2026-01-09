@@ -14,7 +14,7 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 🔗 **[Try Rovo at rovo.ai](https://rovo.ai)**
 
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/zaidmukaddam/rovo)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/haziqbangash/rovo)
 
 ## Powered By
 
@@ -119,10 +119,6 @@ A minimalistic AI-powered search engine that helps you find information on the i
 - [Better Auth](https://github.com/better-auth/better-auth) - Authentication
 - [Drizzle ORM](https://orm.drizzle.team/) - Database management
 - [Novita AI](https://novita.ai) - AI Inference
-
-### Deploy your own
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Frovo&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,SUPADATA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY,SCIRA_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Rovo%20to%20function)
 
 ## Set Rovo as your default search engine
 

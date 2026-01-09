@@ -68,7 +68,7 @@ export const metadata: Metadata = {
     'AI Search Engine',
     'mplx.run',
     'mplx ai',
-    'zaid mukaddam',
+    'haziqbangash mukaddam',
     'rovo.how',
     'search engine',
     'AI',

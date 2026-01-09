@@ -6,7 +6,7 @@ import { ArrowUp, ChevronRight, Mic, MicOff } from "lucide-react";
 import { Orb } from "@/components/ui/orb";
 import { Button } from "@/components/ui/button";
 import { VoicePicker } from "@/components/ui/voice-picker";
-import { RovoLogo } from "@/components/logos/rovo-logo";
+import { RovoLogo } from "@/components/logos/scira-logo";
 import {
   VoiceButton,
   type VoiceButtonState,

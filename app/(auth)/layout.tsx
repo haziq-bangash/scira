@@ -142,7 +142,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               </a>{' '}
               •{' '}
               <a
-                href="https://peerlist.io/zaidmukaddam/project/rovo-ai-20"
+                href="https://peerlist.io/haziqbangash/project/rovo-ai-20"
                 target="_blank"
                 className="hover:text-foreground transition-colors"
               >

@@ -36,7 +36,6 @@ export type SearchGroupId =
 
 // Search provider information for dynamic descriptions
 export const searchProviderInfo = {
-  parallel: 'Parallel AI',
   exa: 'Exa',
   tavily: 'Tavily',
   firecrawl: 'Firecrawl',
@@ -123,7 +122,7 @@ export function getSearchGroups(searchProvider: SearchProvider = 'exa') {
     {
       id: 'reddit' as const,
       name: 'Reddit',
-      description: 'Search Reddit posts powered by Parallel',
+      description: 'Search Reddit posts',
       icon: RedditIcon,
       show: true,
     },

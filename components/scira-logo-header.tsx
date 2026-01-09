@@ -1,5 +1,5 @@
 import React from 'react';
-import { RovoLogo } from './logos/rovo-logo';
+import { RovoLogo } from './logos/scira-logo';
 
 export const RovoLogoHeader = () => (
   <div className="flex items-center gap-2 my-1.5">

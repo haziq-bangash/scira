@@ -26,7 +26,6 @@ import {
   updateCustomInstructions,
   deleteCustomInstructions,
   upsertUserPreferences,
-  getDodoSubscriptionsByUserId,
   createLookout,
   getLookoutsByUserId,
   getLookoutById,
@@ -35,7 +34,6 @@ import {
   deleteLookout,
   getChatWithUserById,
 } from '@/lib/db/queries';
-import { extractChatPreview } from '@/lib/search-utils';
 import { db } from '@/lib/db';
 import { chat } from '@/lib/db/schema';
 import { eq, desc, ilike, and } from 'drizzle-orm';
@@ -211,7 +209,6 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
   const startTime = Date.now();
   const firstTextPart = message.parts.find((part) => part.type === 'text');
   const prompt = JSON.stringify(firstTextPart && firstTextPart.type === 'text' ? firstTextPart.text : '');
-  console.log('Prompt: ', prompt);
   const { text: title } = await generateText({
     model: rovo.languageModel('rovo-name'),
     temperature: 1,
@@ -2446,10 +2443,10 @@ export async function getSubDetails() {
 
   if (!userData) return { hasSubscription: false };
 
-  return userData.polarSubscription
+  return userData.stripeSubscription
     ? {
       hasSubscription: true,
-      subscription: userData.polarSubscription,
+      subscription: userData.stripeSubscription,
     }
     : { hasSubscription: false };
 }
@@ -2609,7 +2606,7 @@ export async function getDiscountConfigAction(params?: DiscountConfigParams) {
       }
     }
 
-    return await getDiscountConfig(userEmail ?? undefined, isIndianUser);
+    return await getDiscountConfig(userEmail ?? undefined);
   } catch (error) {
     console.error('Error getting discount configuration:', error);
     return {
@@ -2759,8 +2756,8 @@ export async function getUserPreferences(providedUser?: any) {
 }
 
 export async function saveUserPreferences(preferences: Partial<{
-  'rovo-search-provider'?: 'exa' | 'parallel' | 'tavily' | 'firecrawl';
-  'rovo-extreme-search-provider'?: 'exa' | 'parallel';
+  'rovo-search-provider'?: 'exa' | 'tavily' | 'firecrawl';
+  'rovo-extreme-search-provider'?: 'exa';
   'rovo-group-order'?: string[];
   'rovo-model-order-global'?: string[];
   'rovo-blur-personal-info'?: boolean;
@@ -2812,51 +2809,6 @@ export async function getProUserStatusOnly(): Promise<boolean> {
   // Import here to avoid issues with SSR
   const { isUserPro } = await import('@/lib/user-data-server');
   return await isUserPro();
-}
-
-export async function getDodoSubscriptionHistory() {
-  try {
-    const user = await getUser();
-    if (!user) return null;
-
-    const subscriptions = await getDodoSubscriptionsByUserId({ userId: user.id });
-    return subscriptions;
-  } catch (error) {
-    console.error('Error getting subscription history:', error);
-    return null;
-  }
-}
-
-export async function getDodoSubscriptionProStatus() {
-  'use server';
-
-  // Import here to avoid issues with SSR
-  const { getComprehensiveUserData } = await import('@/lib/user-data-server');
-  const userData = await getComprehensiveUserData();
-
-  if (!userData) return { isProUser: false, hasSubscriptions: false };
-
-  const isDodoProUser = userData.proSource === 'dodo' && userData.isProUser;
-
-  return {
-    isProUser: isDodoProUser,
-    hasSubscriptions: Boolean(userData.dodoSubscription?.hasSubscriptions),
-    expiresAt: userData.dodoSubscription?.expiresAt,
-    source: userData.proSource,
-    daysUntilExpiration: userData.dodoSubscription?.daysUntilExpiration,
-    isExpired: userData.dodoSubscription?.isExpired,
-    isExpiringSoon: userData.dodoSubscription?.isExpiringSoon,
-  };
-}
-
-export async function getDodoSubscriptionExpirationDate() {
-  'use server';
-
-  // Import here to avoid issues with SSR
-  const { getComprehensiveUserData } = await import('@/lib/user-data-server');
-  const userData = await getComprehensiveUserData();
-
-  return userData?.dodoSubscription?.expiresAt || null;
 }
 
 // Initialize QStash client

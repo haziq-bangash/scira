@@ -123,7 +123,7 @@ export default function TermsPage() {
           <ul>
             <li>Our service is hosted on Vercel&apos;s infrastructure</li>
             <li>We integrate with AI technology providers including OpenAI, Anthropic, xAI, and others</li>
-            <li>We use payment processors including Polar and DodoPayments for billing and subscription management</li>
+            <li>We use Stripe as payment processor for billing and subscription management</li>
             <li>These third-party services have their own terms of service and privacy policies</li>
             <li>We are not responsible for the practices or policies of these third-party services</li>
           </ul>
@@ -154,10 +154,7 @@ export default function TermsPage() {
           </p>
           <ul>
             <li>
-              <strong>Polar:</strong> For recurring monthly subscriptions (international users)
-            </li>
-            <li>
-              <strong>DodoPayments:</strong> For one-time payments (primarily for Indian users)
+              <strong>Stripe:</strong> For recurring monthly subscriptions (international users)
             </li>
           </ul>
           <p>
@@ -230,8 +227,8 @@ export default function TermsPage() {
           <h2>14. Contact Us</h2>
           <p>If you have any questions about these Terms of Service, please contact us at:</p>
           <p>
-            <a href="mailto:zaid@rovo.ai" className="flex items-center gap-1">
-              zaid@rovo.ai <ExternalLink className="h-4 w-4" />
+            <a href="mailto:haziqbangash@rovo.ai" className="flex items-center gap-1">
+              haziqbangash@rovo.ai <ExternalLink className="h-4 w-4" />
             </a>
           </p>
 

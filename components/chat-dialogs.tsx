@@ -46,39 +46,24 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
   }, [open]);
 
   const pricing = useMemo(() => {
-    const defaultUSDPrice = PRICING.PRO_MONTHLY;
-    const defaultINRPrice = PRICING.PRO_MONTHLY_INR;
+    const defaultPrice = PRICING.PRO_MONTHLY;
 
     if (!discountConfig || !discountConfig.enabled || !discountConfig.isStudentDiscount) {
       return {
-        usd: { finalPrice: defaultUSDPrice, hasDiscount: false, originalPrice: defaultUSDPrice },
-        inr: { finalPrice: defaultINRPrice, hasDiscount: false, originalPrice: defaultINRPrice },
+        finalPrice: defaultPrice,
+        hasDiscount: false,
+        originalPrice: defaultPrice,
       };
     }
 
-    // Calculate USD pricing with student discount
-    const usdOriginalPrice: number = defaultUSDPrice;
-    const usdFinalPrice: number = discountConfig.finalPrice || defaultUSDPrice;
-    const hasUSDDiscount = !!discountConfig.finalPrice && discountConfig.finalPrice < defaultUSDPrice;
-
-    // Calculate INR pricing with student discount
-    const inrOriginalPrice: number = defaultINRPrice;
-    const inrFinalPrice: number = discountConfig.inrPrice || defaultINRPrice;
-    const hasINRDiscount = !!discountConfig.inrPrice && discountConfig.inrPrice < defaultINRPrice;
+    // Calculate pricing with student discount (Stripe handles currency conversion)
+    const finalPrice: number = discountConfig.finalPrice || defaultPrice;
+    const hasDiscount = !!discountConfig.finalPrice && discountConfig.finalPrice < defaultPrice;
 
     return {
-      usd: {
-        finalPrice: usdFinalPrice,
-        originalPrice: usdOriginalPrice,
-        hasDiscount: hasUSDDiscount,
-      },
-      inr: discountConfig.inrPrice
-        ? {
-            finalPrice: inrFinalPrice,
-            originalPrice: inrOriginalPrice,
-            hasDiscount: hasINRDiscount,
-          }
-        : null,
+      finalPrice,
+      originalPrice: defaultPrice,
+      hasDiscount,
     };
   }, [discountConfig]);
 
@@ -94,7 +79,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
               height={630}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent" />
             <div className="absolute bottom-6 left-6 right-6">
               <div className="mb-3">
                 {discountConfig && discountConfig.enabled && discountConfig.isStudentDiscount && (
@@ -111,29 +96,16 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
               </DialogTitle>
               <DialogDescription className="text-white/90">
                 <div className="flex items-center gap-2 mb-2">
-                  {pricing.usd.hasDiscount ? (
+                  {pricing.hasDiscount ? (
                     <>
-                      <span className="text-lg text-white/60 line-through">${pricing.usd.originalPrice}</span>
-                      <span className="text-2xl font-bold">${pricing.usd.finalPrice.toFixed(2)}</span>
+                      <span className="text-lg text-white/60 line-through">${pricing.originalPrice}</span>
+                      <span className="text-2xl font-bold">${pricing.finalPrice.toFixed(2)}</span>
                     </>
                   ) : (
-                    <span className="text-2xl font-bold">${pricing.usd.finalPrice}</span>
+                    <span className="text-2xl font-bold">${pricing.finalPrice}</span>
                   )}
                   <span className="text-sm text-white/80">/month</span>
                 </div>
-                {pricing.inr && (
-                  <div className="flex items-center gap-2 mb-2">
-                    {pricing.inr.hasDiscount ? (
-                      <>
-                        <span className="text-sm text-white/60 line-through">₹{pricing.inr.originalPrice}</span>
-                        <span className="text-lg font-semibold">₹{pricing.inr.finalPrice}</span>
-                      </>
-                    ) : (
-                      <span className="text-lg font-semibold">₹{pricing.inr.finalPrice}</span>
-                    )}
-                    <span className="text-sm text-white/80">for a month</span>
-                  </div>
-                )}
                 <p className="text-sm text-white/80 text-left">
                   Unlock unlimited searches, advanced AI models, and premium features to supercharge your research.
                 </p>
@@ -152,7 +124,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
 
         <div className="px-6 py-6 flex flex-col gap-4">
           <div className="flex items-center gap-4">
-            <CheckIcon className="size-4 text-primary flex-shrink-0" />
+            <CheckIcon className="size-4 text-primary shrink-0" />
             <div className="space-y-1">
               <p className="text-sm font-medium text-foreground">Rovo Lookout</p>
               <p className="text-xs text-muted-foreground">Automated search monitoring on your schedule</p>
@@ -160,7 +132,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
           </div>
 
           <div className="flex items-center gap-4">
-            <CheckIcon className="size-4 text-primary flex-shrink-0" />
+            <CheckIcon className="size-4 text-primary shrink-0" />
             <div className="space-y-1">
               <p className="text-sm font-medium text-foreground">Unlimited Searches</p>
               <p className="text-xs text-muted-foreground">No daily limits on your research</p>
@@ -168,7 +140,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
           </div>
 
           <div className="flex items-center gap-4">
-            <CheckIcon className="size-4 text-primary flex-shrink-0" />
+            <CheckIcon className="size-4 text-primary shrink-0" />
             <div className="space-y-1">
               <p className="text-sm font-medium text-foreground">Advanced AI Models</p>
               <p className="text-xs text-muted-foreground">
@@ -178,7 +150,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
           </div>
 
           <div className="flex items-center gap-4">
-            <CheckIcon className="size-4 text-primary flex-shrink-0" />
+            <CheckIcon className="size-4 text-primary shrink-0" />
             <div className="space-y-1">
               <p className="text-sm font-medium text-foreground">Priority Support</p>
               <p className="text-xs text-muted-foreground">Get help when you need it most</p>
@@ -254,7 +226,7 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
               height={630}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium mb-3">
                 New Feature
@@ -277,15 +249,15 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
 
             <div className="space-y-3">
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 text-primary shrink-0" />
                 <span className="text-sm text-foreground">Schedule searches to run automatically</span>
               </div>
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 text-primary shrink-0" />
                 <span className="text-sm text-foreground">Receive notifications when results are ready</span>
               </div>
               <div className="flex items-center gap-4">
-                <CheckIcon className="size-4 text-primary flex-shrink-0" />
+                <CheckIcon className="size-4 text-primary shrink-0" />
                 <span className="text-sm text-foreground">Access comprehensive search history</span>
               </div>
             </div>

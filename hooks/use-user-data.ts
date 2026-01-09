@@ -35,22 +35,11 @@ export function useUserData() {
 
     // Quick access to commonly used properties
     isProUser: Boolean(userData?.isProUser),
-    proSource: userData?.proSource || 'none',
     subscriptionStatus: userData?.subscriptionStatus || 'none',
 
-    // Polar subscription details
-    polarSubscription: userData?.polarSubscription,
-    hasPolarSubscription: Boolean(userData?.polarSubscription),
-
-    // Dodo Subscription details
-    dodoSubscription: userData?.dodoSubscription,
-    hasDodoSubscription: Boolean(userData?.dodoSubscription?.hasSubscriptions),
-    dodoExpiresAt: userData?.dodoSubscription?.expiresAt,
-    isDodoExpiring: Boolean(userData?.dodoSubscription?.isExpiringSoon),
-    isDodoExpired: Boolean(userData?.dodoSubscription?.isExpired),
-
-    // Subscription history
-    subscriptionHistory: userData?.subscriptionHistory || [],
+    // Stripe subscription details
+    stripeSubscription: userData?.stripeSubscription,
+    hasStripeSubscription: Boolean(userData?.stripeSubscription),
 
     // Rate limiting helpers
     shouldCheckLimits: !isLoading && userData && !userData.isProUser,
@@ -63,28 +52,12 @@ export function useUserData() {
     hasNoSubscription: userData?.subscriptionStatus === 'none',
 
     // Legacy compatibility helpers
-    subscriptionData: userData?.polarSubscription
+    subscriptionData: userData?.stripeSubscription
       ? {
           hasSubscription: true,
-          subscription: userData.polarSubscription,
+          subscription: userData.stripeSubscription,
         }
       : { hasSubscription: false },
-
-    // Map dodoSubscription to legacy dodoProStatus structure for settings dialog
-    dodoProStatus: userData?.dodoSubscription
-      ? {
-          isProUser: userData.proSource === 'dodo' && userData.isProUser,
-          hasSubscriptions: userData.dodoSubscription.hasSubscriptions,
-          expiresAt: userData.dodoSubscription.expiresAt,
-          mostRecentSubscription: userData.dodoSubscription.mostRecentSubscription,
-          daysUntilExpiration: userData.dodoSubscription.daysUntilExpiration,
-          isExpired: userData.dodoSubscription.isExpired,
-          isExpiringSoon: userData.dodoSubscription.isExpiringSoon,
-          source: userData.proSource,
-        }
-      : null,
-
-    expiresAt: userData?.dodoSubscription?.expiresAt,
   };
 }
 
@@ -98,7 +71,6 @@ export function useIsProUser() {
 export function useSubscriptionStatus() {
   const {
     subscriptionStatus,
-    proSource,
     hasActiveSubscription,
     isSubscriptionCanceled,
     isSubscriptionExpired,
@@ -108,7 +80,6 @@ export function useSubscriptionStatus() {
 
   return {
     subscriptionStatus,
-    proSource,
     hasActiveSubscription,
     isSubscriptionCanceled,
     isSubscriptionExpired,

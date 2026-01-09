@@ -798,7 +798,7 @@ export async function POST(req: NextRequest) {
       return out;
     };
 
-    // Draw the Rovo logo (vector) using the same SVG paths as components/logos/rovo-logo.tsx
+    // Draw the Rovo logo (vector) using the same SVG paths as components/logos/scira-logo.tsx
     // Positions the logo with its top-left at (x, yTop). Width controls overall size.
     function drawRovoLogo(x: number, yTop: number, width: number, color = rgb(0, 0, 0)) {
       // Original viewBox: 910 x 934
@@ -810,7 +810,7 @@ export async function POST(req: NextRequest) {
 
       const border = (w: number) => Math.max(0.5, w * scale);
 
-      // Paths extracted from /components/logos/rovo-logo.tsx
+      // Paths extracted from /components/logos/scira-logo.tsx
       const p1 =
         'M647.664 197.775C569.13 189.049 525.5 145.419 516.774 66.8849C508.048 145.419 464.418 189.049 385.884 197.775C464.418 206.501 508.048 250.131 516.774 328.665C525.5 250.131 569.13 206.501 647.664 197.775Z';
       const p2 =

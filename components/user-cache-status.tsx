@@ -12,7 +12,7 @@ interface UserCacheStatusProps {
 }
 
 export function UserCacheStatus({ className }: UserCacheStatusProps) {
-  const { user, isLoading, isProUser, isCached, clearCache, refetch, isRefetching, subscriptionStatus, proSource } =
+  const { user, isLoading, isProUser, isCached, clearCache, refetch, isRefetching, subscriptionStatus } =
     useUser();
 
   const handleClearCache = () => {
@@ -52,7 +52,7 @@ export function UserCacheStatus({ className }: UserCacheStatusProps) {
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Email:</span>
-              <span className="text-sm font-medium truncate max-w-[150px]">{user.email || 'N/A'}</span>
+              <span className="text-sm font-medium truncate max-w-37.5">{user.email || 'N/A'}</span>
             </div>
 
             <div className="flex items-center justify-between">
@@ -68,7 +68,7 @@ export function UserCacheStatus({ className }: UserCacheStatusProps) {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Source:</span>
                   <Badge variant="outline" className="text-xs">
-                    {proSource}
+                    Stripe
                   </Badge>
                 </div>
 

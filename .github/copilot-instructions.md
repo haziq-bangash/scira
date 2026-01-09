@@ -66,7 +66,7 @@ The main search API route (`POST /api/search`) follows this pattern:
 - `chat`, `message` - Core chat data
 - `customInstructions`, `userPreferences` - User settings
 - `extremeSearchUsage`, `messageUsage` - Usage tracking
-- `dodosubscription` - Subscription management
+- `stripeSubscription` - Subscription management
 - `lookout` - Background monitoring jobs
 
 **Queries**: All database operations in `lib/db/queries.ts`
@@ -81,7 +81,7 @@ The main search API route (`POST /api/search`) follows this pattern:
 **Setup**: `lib/auth.ts` configures Better Auth with:
 - Drizzle adapter
 - Social providers (GitHub, Google, Twitter)
-- Subscription plugins (Polar, DodoPayments)
+- Subscription plugins (Polar, Stripe)
 - Email verification
 
 **Usage in components**:

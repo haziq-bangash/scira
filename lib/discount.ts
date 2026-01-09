@@ -4,10 +4,8 @@ export interface DiscountConfig {
   enabled: boolean;
   message?: string;
   finalPrice?: number; // USD price for students
-  inrPrice?: number; // INR price for students
   isStudentDiscount: boolean;
-  dodoDiscountId?: string; // Dodo Payments discount ID for Indian users
-  discountId?: string; // Polar discount ID for non-Indian users
+  stripeDiscountId?: string; // Stripe discount/coupon ID for student pricing
 }
 
 /**
@@ -40,7 +38,7 @@ export function isStudentEmail(email: string, studentDomains: string[]): boolean
  * Fetches student discount configuration
  * Returns enabled config only for verified student emails
  */
-export async function getDiscountConfig(userEmail?: string, isIndianUser?: boolean): Promise<DiscountConfig> {
+export async function getDiscountConfig(userEmail?: string): Promise<DiscountConfig> {
   const defaultConfig: DiscountConfig = {
     enabled: false,
     isStudentDiscount: false,
@@ -76,20 +74,18 @@ export async function getDiscountConfig(userEmail?: string, isIndianUser?: boole
     return defaultConfig;
   }
 
-  // Student discount available - DodoPayments for all countries
-  const dodoStudentDiscountId = process.env.DODO_STUD_DISC_ID;
+  // Student discount available - Stripe for all countries
+  const stripeStudentDiscountId = process.env.STRIPE_STUDENT_DISCOUNT_ID;
 
-  if (!dodoStudentDiscountId) {
+  if (!stripeStudentDiscountId) {
     return defaultConfig;
   }
 
   return {
     enabled: true,
     message: '🎓 Student discount applied',
-    finalPrice: 5, // $5/month for students (USD)
-    inrPrice: 450, // ₹450/month for students (INR)
+    finalPrice: 5, // $5/month for students
     isStudentDiscount: true,
-    dodoDiscountId: dodoStudentDiscountId,
-    discountId: dodoStudentDiscountId, // Use same ID for all
+    stripeDiscountId: stripeStudentDiscountId,
   };
 }

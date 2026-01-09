@@ -14,7 +14,6 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/u
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { useMediaQuery } from '@/hooks/use-media-query';
-import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useSyncedPreferences } from '@/hooks/use-synced-preferences';
 import {
   getUserMessageCount,
@@ -63,7 +62,7 @@ import { models } from '@/ai/providers';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useIsProUser } from '@/contexts/user-context';
-import { RovoLogo } from './logos/rovo-logo';
+import { RovoLogo } from './logos/scira-logo';
 import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { HugeiconsIcon } from '@/components/ui/hugeicons';
@@ -161,17 +160,6 @@ export function ProfileSection({ user, subscriptionData, isProUser, isProStatusL
   );
 }
 
-// Icon components for search providers
-const ParallelIcon = ({ className }: { className?: string }) => (
-  <Image
-    src="/parallel-icon.svg"
-    alt="Parallel AI"
-    width={16}
-    height={16}
-    className={cn('bg-white rounded-full p-0.5', className)}
-  />
-);
-
 const ExaIcon = ({ className }: { className?: string }) => (
   <Image src="/exa-color.svg" alt="Exa" width={16} height={16} className={className} />
 );
@@ -201,13 +189,6 @@ const searchProviders = [
     default: false,
   },
   {
-    value: 'parallel',
-    label: 'Parallel AI',
-    description: 'Base and premium web search along with Firecrawl image search support',
-    icon: ParallelIcon,
-    default: false,
-  },
-  {
     value: 'tavily',
     label: 'Tavily',
     description: 'Wide web search with comprehensive results and analysis',
@@ -225,13 +206,6 @@ const extremeSearchProviders = [
     icon: ExaIcon,
     default: true,
   },
-  {
-    value: 'parallel',
-    label: 'Parallel',
-    description: 'AI-powered extraction with enhanced speed and quality',
-    icon: ParallelIcon,
-    default: false,
-  },
 ] as const;
 
 // Search Provider Selector Component
@@ -242,7 +216,7 @@ function SearchProviderSelector({
   className,
 }: {
   value: string;
-  onValueChange: (value: 'exa' | 'parallel' | 'tavily' | 'firecrawl') => void;
+  onValueChange: (value: 'exa' | 'tavily' | 'firecrawl') => void;
   disabled?: boolean;
   className?: string;
 }) {
@@ -292,7 +266,7 @@ function ExtremeSearchProviderSelector({
   className,
 }: {
   value: string;
-  onValueChange: (value: 'exa' | 'parallel') => void;
+  onValueChange: (value: 'exa') => void;
   disabled?: boolean;
   className?: string;
 }) {
@@ -345,12 +319,12 @@ export function PreferencesSection({
   setIsCustomInstructionsEnabled?: (value: boolean | ((val: boolean) => boolean)) => void;
 }) {
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const [searchProvider, setSearchProvider] = useSyncedPreferences<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
+  const [searchProvider, setSearchProvider] = useSyncedPreferences<'exa' | 'tavily' | 'firecrawl'>(
     'rovo-search-provider',
     'exa',
   );
 
-  const [extremeSearchProvider, setExtremeSearchProvider] = useSyncedPreferences<'exa' | 'parallel'>(
+  const [extremeSearchProvider, setExtremeSearchProvider] = useSyncedPreferences<'exa'>(
     'rovo-extreme-search-provider',
     'exa',
   );
@@ -390,23 +364,21 @@ export function PreferencesSection({
   const enabled = isCustomInstructionsEnabled ?? true;
   const setEnabled = setIsCustomInstructionsEnabled ?? (() => { });
 
-  const handleSearchProviderChange = (newProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl') => {
+  const handleSearchProviderChange = (newProvider: 'exa' | 'tavily' | 'firecrawl') => {
     setSearchProvider(newProvider);
     toast.success(
       `Search provider changed to ${newProvider === 'exa'
           ? 'Exa'
-          : newProvider === 'parallel'
-            ? 'Parallel AI'
-            : newProvider === 'tavily'
-              ? 'Tavily'
-              : 'Firecrawl'
+          : newProvider === 'tavily'
+            ? 'Tavily'
+            : 'Firecrawl'
       }`,
     );
   };
 
-  const handleExtremeSearchProviderChange = (newProvider: 'exa' | 'parallel') => {
+  const handleExtremeSearchProviderChange = (newProvider: 'exa') => {
     setExtremeSearchProvider(newProvider);
-    toast.success(`Extreme search provider changed to ${newProvider === 'exa' ? 'Exa' : 'Parallel AI'}`);
+    toast.success(`Extreme search provider changed to Exa`);
   };
 
   // Custom Instructions queries and handlers
@@ -1216,118 +1188,36 @@ export function SubscriptionSection({ subscriptionData, isProUser, user }: any) 
   const [isManagingSubscription, setIsManagingSubscription] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
-  // Use data from user object (already cached)
-  const dodoProStatus = user?.dodoProStatus || null;
-
-  // Fetch Polar orders using React Query
-  const { data: polarOrders, isLoading: polarOrdersLoading } = useQuery({
-    queryKey: ['polarOrders', user?.id],
-    queryFn: async () => {
-      try {
-        const ordersResponse = await authClient.customer.orders.list({
-          query: {
-            page: 1,
-            limit: 10,
-            productBillingType: 'recurring',
-          },
-        });
-        return ordersResponse.data;
-      } catch (error) {
-        console.log('Failed to fetch Polar orders:', error);
-        return null;
-      }
-    },
-    enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-  });
-
-  // Fetch Dodo subscriptions using React Query
-  const { data: dodoSubscriptions, isLoading: dodoSubscriptionsLoading } = useQuery({
-    queryKey: ['dodoSubscriptions', user?.id],
-    queryFn: async () => {
-      try {
-        const { data, error } = await betterauthClient.dodopayments.customer.subscriptions.list();
-        if (error) {
-          console.log('Failed to fetch Dodo subscriptions:', error);
-          return null;
-        }
-        console.log('Dodo subscriptions response:', data);
-        return data;
-      } catch (error) {
-        console.log('Failed to fetch Dodo subscriptions:', error);
-        return null;
-      }
-    },
-    enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-  });
+  // Check for active status - Stripe only
+  const hasActiveSubscription =
+    subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
+  const isProUserActive = hasActiveSubscription || user?.isProUser || false;
+  const subscription = subscriptionData?.subscription;
 
   const handleManageSubscription = async () => {
-    // Determine the subscription source
-    const getProAccessSource = () => {
-      if (hasActiveSubscription) return 'polar';
-      if (hasDodoProStatus) return 'dodo';
-      return null;
-    };
-
-    const proSource = getProAccessSource();
-
-    console.log('proSource', proSource);
-
     try {
       setIsManagingSubscription(true);
+      // Use Stripe billing portal
+      const { data: portal, error } = await authClient.subscription.billingPortal({
+        returnUrl: '/settings',
+      });
 
-      console.log('Settings Dialog - Provider source:', proSource);
-      console.log('User dodoProStatus:', user?.dodoProStatus);
-      console.log('User full object keys:', Object.keys(user || {}));
+      if (error) {
+        throw new Error(error.message || 'Failed to open billing portal');
+      }
 
-      if (proSource === 'dodo') {
-        // Use DodoPayments portal for DodoPayments users
-        console.log('Opening DodoPayments portal');
-        console.log('User object for DodoPayments:', {
-          id: user?.id,
-          email: user?.email,
-          dodoProStatus: user?.dodoProStatus,
-          isProUser: user?.isProUser,
-        });
-        await betterauthClient.dodopayments.customer.portal();
+      if (portal?.url) {
+        window.location.href = portal.url;
       } else {
-        // Use Polar portal for Polar subscribers
-        console.log('Opening Polar portal');
-        await authClient.customer.portal();
+        throw new Error('No portal URL received');
       }
     } catch (error) {
       console.error('Subscription management error:', error);
-
-      if (proSource === 'dodo') {
-        toast.error('Unable to access DodoPayments portal. Please contact support at zaid@rovo.ai');
-      } else {
-        toast.error('Failed to open subscription management');
-      }
+      toast.error(error instanceof Error ? error.message : 'Failed to open subscription management');
     } finally {
       setIsManagingSubscription(false);
     }
   };
-
-  // Check for active status from either source
-  const hasActiveSubscription =
-    subscriptionData?.hasSubscription && subscriptionData?.subscription?.status === 'active';
-  const hasDodoProStatus = dodoProStatus?.isProUser || (user?.proSource === 'dodo' && user?.isProUser);
-  const isProUserActive = hasActiveSubscription || hasDodoProStatus;
-  const subscription = subscriptionData?.subscription;
-
-  // Check if DodoPayments Pro is expiring soon (within 7 days)
-  const getDaysUntilExpiration = () => {
-    if (!dodoProStatus?.expiresAt) return null;
-    const now = new Date();
-    const expiresAt = new Date(dodoProStatus.expiresAt);
-    const diffTime = expiresAt.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
-  const daysUntilExpiration = getDaysUntilExpiration();
-  const isExpiringSoon = daysUntilExpiration !== null && daysUntilExpiration <= 7 && daysUntilExpiration > 0;
 
   return (
     <div className={isMobile ? 'space-y-3' : 'space-y-4'}>
@@ -1340,15 +1230,9 @@ export function SubscriptionSection({ subscriptionData, isProUser, user }: any) 
                   <HugeiconsIcon icon={Crown02Icon} size={isMobile ? 14 : 16} color="currentColor" strokeWidth={1.5} />
                 </div>
                 <div>
-                  <h3 className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>
-                    PRO {hasActiveSubscription ? 'Subscription' : 'Membership'}
-                  </h3>
+                  <h3 className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>PRO Subscription</h3>
                   <p className={cn('opacity-90', isMobile ? 'text-[10px]' : 'text-xs')}>
-                    {hasActiveSubscription
-                      ? subscription?.status === 'active'
-                        ? 'Active'
-                        : subscription?.status || 'Unknown'
-                      : 'Active (DodoPayments)'}
+                    {subscription?.status === 'active' ? 'Active' : subscription?.status || 'Active'}
                   </p>
                 </div>
               </div>
@@ -1363,29 +1247,16 @@ export function SubscriptionSection({ subscriptionData, isProUser, user }: any) 
             </div>
             <div className={cn('opacity-90 mb-3', isMobile ? 'text-[11px]' : 'text-xs')}>
               <p className="mb-1">Unlimited access to all premium features</p>
-              {hasActiveSubscription && subscription && (
+              {hasActiveSubscription && subscription && subscription.plan && (
                 <div className="flex gap-4 text-[10px] opacity-75">
-                  <span>
-                    ${(subscription.amount / 100).toFixed(2)}/{subscription.recurringInterval}
-                  </span>
-                  <span>Next billing: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
-                </div>
-              )}
-              {hasDodoProStatus && !hasActiveSubscription && (
-                <div className="space-y-1">
-                  <div className="flex gap-4 text-[10px] opacity-75">
-                    <span>₹1500/month (auto-renews)</span>
-                    <span>🇮🇳 Indian pricing</span>
-                  </div>
-                  {dodoProStatus?.expiresAt && (
-                    <div className="text-[10px] opacity-75">
-                      <span>Next billing: {new Date(dodoProStatus.expiresAt).toLocaleDateString()}</span>
-                    </div>
+                  <span>{subscription.plan}</span>
+                  {subscription.periodEnd && (
+                    <span>Next billing: {new Date(subscription.periodEnd).toLocaleDateString()}</span>
                   )}
                 </div>
               )}
             </div>
-            {(hasActiveSubscription || hasDodoProStatus) && (
+            {hasActiveSubscription && (
               <Button
                 variant="secondary"
                 onClick={handleManageSubscription}
@@ -1401,57 +1272,6 @@ export function SubscriptionSection({ subscriptionData, isProUser, user }: any) 
               </Button>
             )}
           </div>
-
-          {/* Expiration Warning for DodoPayments */}
-          {isExpiringSoon && (
-            <div
-              className={cn(
-                'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg',
-                isMobile ? 'p-3' : 'p-4',
-              )}
-            >
-              <div className="flex items-start gap-2">
-                <div className={cn('bg-yellow-100 dark:bg-yellow-900/40 rounded', isMobile ? 'p-1' : 'p-1.5')}>
-                  <HugeiconsIcon
-                    icon={Crown02Icon}
-                    size={isMobile ? 14 : 16}
-                    color="currentColor"
-                    strokeWidth={1.5}
-                    className={cn('text-yellow-600 dark:text-yellow-500')}
-                  />
-                </div>
-                <div className="flex-1">
-                  <h4
-                    className={cn(
-                      'font-semibold text-yellow-800 dark:text-yellow-200',
-                      isMobile ? 'text-xs' : 'text-sm',
-                    )}
-                  >
-                    Pro Access Expiring Soon
-                  </h4>
-                  <p
-                    className={cn(
-                      'text-yellow-700 dark:text-yellow-300',
-                      isMobile ? 'text-[11px] mt-1' : 'text-xs mt-1',
-                    )}
-                  >
-                    Your Pro access expires in {daysUntilExpiration} {daysUntilExpiration === 1 ? 'day' : 'days'}. Renew
-                    now to continue enjoying unlimited features.
-                  </p>
-                  <Button
-                    asChild
-                    size="sm"
-                    className={cn(
-                      'mt-2 bg-yellow-600 hover:bg-yellow-700 text-white',
-                      isMobile ? 'h-7 text-xs' : 'h-8',
-                    )}
-                  >
-                    <Link href="/pricing">Renew Pro Access</Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       ) : (
         <div className={isMobile ? 'space-y-2' : 'space-y-3'}>
@@ -1487,104 +1307,6 @@ export function SubscriptionSection({ subscriptionData, isProUser, user }: any) 
           </div>
         </div>
       )}
-
-      <div className={isMobile ? 'space-y-2' : 'space-y-3'}>
-        <h4 className={cn('font-semibold', isMobile ? 'text-xs' : 'text-sm')}>Billing History</h4>
-        {polarOrdersLoading || dodoSubscriptionsLoading ? (
-          <div className={cn('border rounded-lg flex items-center justify-center', isMobile ? 'p-3 h-16' : 'p-4 h-20')}>
-            <Loader2 className={cn(isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4', 'animate-spin')} />
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {/* Show Dodo subscriptions */}
-            {dodoSubscriptions &&
-              (Array.isArray(dodoSubscriptions) ? dodoSubscriptions : dodoSubscriptions.items || []).length > 0 && (
-                <>
-                  {(Array.isArray(dodoSubscriptions) ? dodoSubscriptions : dodoSubscriptions.items || [])
-                    .slice(0, 3)
-                    .map((subscription) => (
-                      <div key={subscription.id} className={cn('bg-muted/30 rounded-lg', isMobile ? 'p-2.5' : 'p-3')}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <p className={cn('font-medium truncate', isMobile ? 'text-xs' : 'text-sm')}>
-                              Rovo Pro (DodoPayments)
-                            </p>
-                            <div className="flex items-center gap-2">
-                              <p className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>
-                                {new Date(subscription.created_at).toLocaleDateString()}
-                              </p>
-                              <Badge variant="secondary" className="text-[8px] px-1 py-0">
-                                🇮🇳 {subscription.currency?.toUpperCase() || 'INR'}
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <span className={cn('font-semibold block', isMobile ? 'text-xs' : 'text-sm')}>
-                              ₹{subscription.recurring_pre_tax_amount ? subscription.recurring_pre_tax_amount : '—'}
-                            </span>
-                            <span className={cn('text-muted-foreground', isMobile ? 'text-[9px]' : 'text-xs')}>
-                              {subscription.status}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                </>
-              )}
-
-            {/* Show Polar orders */}
-            {polarOrders?.result?.items && polarOrders.result.items.length > 0 && (
-              <>
-                {polarOrders.result.items.slice(0, 3).map((order: any) => (
-                  <div key={order.id} className={cn('bg-muted/30 rounded-lg', isMobile ? 'p-2.5' : 'p-3')}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className={cn('font-medium truncate', isMobile ? 'text-xs' : 'text-sm')}>
-                          {order.product?.name || 'Subscription'}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <p className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>
-                            {new Date(order.createdAt).toLocaleDateString()}
-                          </p>
-                          <Badge variant="secondary" className="text-[8px] px-1 py-0">
-                            🌍 USD
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className={cn('font-semibold block', isMobile ? 'text-xs' : 'text-sm')}>
-                          ${(order.totalAmount / 100).toFixed(2)}
-                        </span>
-                        <span className={cn('text-muted-foreground', isMobile ? 'text-[9px]' : 'text-xs')}>
-                          recurring
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-
-            {/* Show message if no billing history */}
-            {(!dodoSubscriptions ||
-              (Array.isArray(dodoSubscriptions)
-                ? dodoSubscriptions.length === 0
-                : !dodoSubscriptions.items || dodoSubscriptions.items.length === 0)) &&
-              (!polarOrders?.result?.items || polarOrders.result.items.length === 0) && (
-                <div
-                  className={cn(
-                    'border rounded-lg text-center bg-muted/20 flex items-center justify-center',
-                    isMobile ? 'p-4 h-16' : 'p-6 h-20',
-                  )}
-                >
-                  <p className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>
-                    No billing history yet
-                  </p>
-                </div>
-              )}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { authClient, betterauthClient } from '@/lib/auth-client';
+import { authClient } from '@/lib/auth-client';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
@@ -19,16 +19,13 @@ import { SupportedDomainsList } from '@/components/supported-domains-list';
 
 type SubscriptionDetails = {
   id: string;
-  productId: string;
+  plan: string;
   status: string;
-  amount: number;
-  currency: string;
-  recurringInterval: string;
-  currentPeriodStart: Date;
-  currentPeriodEnd: Date;
-  cancelAtPeriodEnd: boolean;
+  periodStart: Date;
+  periodEnd: Date;
+  cancelAt: Date | null;
   canceledAt: Date | null;
-  organizationId: string | null;
+  endedAt: Date | null;
 };
 
 type SubscriptionDetailsResult = {
@@ -79,11 +76,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
       return null;
     }
 
-    if (isINR) {
-      return discountConfig.inrPrice || null;
-    } else {
-      return discountConfig.finalPrice || null;
-    }
+    // discountConfig.finalPrice contains the appropriate price based on user's location
+    return discountConfig.finalPrice || null;
   };
 
   // Check if student discount is active
@@ -91,39 +85,22 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     return discountConfig.enabled && discountConfig.isStudentDiscount;
   };
 
-  const handleCheckout = async (productId: string, slug: string, paymentMethod?: 'dodo' | 'polar') => {
+  const handleCheckout = async (productId: string, slug: string) => {
     if (!user) {
       router.push('/sign-up');
       return;
     }
 
     try {
-      // Use DodoPayments checkout for all new subscriptions
       toast.loading('Redirecting to checkout...');
 
-      const { data: checkout, error } = await betterauthClient.dodopayments.checkoutSession({
-        slug: process.env.NEXT_PUBLIC_PREMIUM_SLUG,
-        customer: {
-          email: user.email || '',
-          name: user.name || '',
-        },
-        billing_currency: location.isIndia ? 'INR' : 'USD',
-        allowed_payment_method_types: [
-          'credit',
-          'debit',
-          'upi_collect',
-          'upi_intent',
-          'apple_pay',
-          'google_pay',
-          'amazon_pay',
-          'sepa',
-          'ach',
-          'klarna',
-          'affirm',
-          'afterpay_clearpay',
-        ],
-        referenceId: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        ...(hasStudentDiscount() && discountConfig.dodoDiscountId && { discount_code: 'SCIRASTUD' }),
+      // Use 'pro' plan for all subscriptions (free plan doesn't need Stripe)
+      const planName = 'pro';
+
+      const { data: checkout, error } = await authClient.subscription.upgrade({
+        plan: planName,
+        successUrl: '/success',
+        cancelUrl: '/pricing',
       });
 
       if (error) {
@@ -137,7 +114,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           toast.dismiss();
           toast.success('🎓 Student discount applied!');
         }
-        // Redirect to DodoPayments checkout
+        // Redirect to Stripe checkout
         window.location.href = checkout.url;
       } else {
         toast.dismiss();
@@ -152,52 +129,37 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
 
   const handleManageSubscription = async () => {
     try {
-      const proSource = getProAccessSource();
-      if (proSource === 'dodo') {
-        await betterauthClient.dodopayments.customer.portal();
+      // Use Stripe billing portal
+      const { data: portal, error } = await authClient.subscription.billingPortal({
+        returnUrl: '/settings',
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to open billing portal');
+      }
+
+      if (portal?.url) {
+        window.location.href = portal.url;
       } else {
-        await authClient.customer.portal();
+        throw new Error('No portal URL received');
       }
     } catch (error) {
       console.error('Failed to open customer portal:', error);
-      toast.error('Failed to open subscription management');
+      toast.error(error instanceof Error ? error.message : 'Failed to open subscription management');
     }
   };
 
-  const STARTER_TIER = process.env.NEXT_PUBLIC_STARTER_TIER;
-  const STARTER_SLUG = process.env.NEXT_PUBLIC_STARTER_SLUG;
-
-  if (!STARTER_TIER || !STARTER_SLUG) {
-    console.error('Missing required environment variables');
-    throw new Error('Missing required environment variables for Starter tier');
-  }
-
-  // Check if user has active Polar subscription
-  const hasPolarSubscription = () => {
+  // Check if user has active Stripe subscription
+  const hasStripeSubscription = () => {
     return (
       subscriptionDetails.hasSubscription &&
-      subscriptionDetails.subscription?.productId === STARTER_TIER &&
       subscriptionDetails.subscription?.status === 'active'
     );
   };
 
-  // Check if user has active Dodo payments subscription
-  const hasDodoSubscription = () => {
-    return user?.isProUser === true && user?.proSource === 'dodo';
-  };
-
-  // Check if user has any Pro status (Polar or DodoPayments)
+  // Check if user has any Pro status
   const hasProAccess = () => {
-    const polarAccess = hasPolarSubscription();
-    const dodoAccess = hasDodoSubscription();
-    return polarAccess || dodoAccess;
-  };
-
-  // Get the source of Pro access for display
-  const getProAccessSource = () => {
-    if (hasPolarSubscription()) return 'polar';
-    if (hasDodoSubscription()) return 'dodo';
-    return null;
+    return hasStripeSubscription() || user?.isProUser === true;
   };
 
   const formatDate = (date: Date) => {
@@ -281,18 +243,15 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
 
               {/* Pricing Display - Show currency based on location */}
               {hasProAccess() ? (
-                // Show user's current pricing method
-                getProAccessSource() === 'dodo' ? (
-                  <div className="flex items-baseline">
-                    <span className="text-4xl font-light">₹{PRICING.PRO_MONTHLY_INR}</span>
-                    <span className="text-muted-foreground ml-2">(excl. GST)/month</span>
-                  </div>
-                ) : (
-                  <div className="flex items-baseline">
-                    <span className="text-4xl font-light">$15</span>
-                    <span className="text-muted-foreground ml-2">/month</span>
-                  </div>
-                )
+                // Show user's current subscription pricing
+                <div className="flex items-baseline">
+                  <span className="text-4xl font-light">
+                    {location.isIndia || derivedIsIndianStudentEmail 
+                      ? `₹${PRICING.PRO_MONTHLY_INR}` 
+                      : '$15'}
+                  </span>
+                  <span className="text-muted-foreground ml-2">/month</span>
+                </div>
               ) : location.isIndia || derivedIsIndianStudentEmail ? (
                 // Show INR pricing for Indian users
                 <div className="space-y-1">
@@ -357,23 +316,18 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
               {hasProAccess() ? (
                 <div className="space-y-4">
                   <Button className="w-full" onClick={handleManageSubscription}>
-                    {getProAccessSource() === 'dodo' ? 'Manage payment' : 'Manage subscription'}
+                    Manage subscription
                   </Button>
-                  {getProAccessSource() === 'polar' && subscriptionDetails.subscription && (
+                  {subscriptionDetails.subscription && (
                     <p className="text-sm text-muted-foreground text-center">
-                      {subscriptionDetails.subscription.cancelAtPeriodEnd
-                        ? `Subscription expires ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`
-                        : `Renews ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`}
-                    </p>
-                  )}
-                  {getProAccessSource() === 'dodo' && user?.dodoSubscription?.expiresAt && (
-                    <p className="text-sm text-muted-foreground text-center">
-                      Access expires {formatDate(new Date(user.dodoSubscription.expiresAt))}
+                      {subscriptionDetails.subscription.cancelAt
+                        ? `Subscription expires ${formatDate(subscriptionDetails.subscription.periodEnd)}`
+                        : `Renews ${formatDate(subscriptionDetails.subscription.periodEnd)}`}
                     </p>
                   )}
                 </div>
               ) : !user ? (
-                <Button className="w-full group" onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}>
+                <Button className="w-full group" onClick={() => handleCheckout('pro', 'pro')}>
                   Sign up for Pro
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
@@ -381,7 +335,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                 <div className="space-y-3">
                   <Button
                     className="w-full group"
-                    onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'dodo')}
+                    onClick={() => handleCheckout('pro', 'pro')}
                     disabled={location.loading}
                   >
                     {location.loading
@@ -478,7 +432,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           </p>
           <p className="text-sm text-muted-foreground">
             Questions?{' '}
-            <a href="mailto:zaid@rovo.ai" className="text-foreground hover:underline">
+            <a href="mailto:haziqbangash@rovo.ai" className="text-foreground hover:underline">
               Get in touch
             </a>
           </p>
