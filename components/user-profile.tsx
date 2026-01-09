@@ -166,7 +166,7 @@ const NavigationMenu = memo(() => {
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a href={'https://rovo.userjot.com'} target="_blank" className="w-full flex items-center gap-2">
+          <a href={'https://rovoai.userjot.com/'} target="_blank" className="w-full flex items-center gap-2">
             <BugIcon className="size-4" />
             <span>Feature/Bug Request</span>
           </a>
