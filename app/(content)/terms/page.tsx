@@ -26,9 +26,9 @@ export default function TermsPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-muted/30 to-transparent" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:24px_24px] opacity-20" />
-        <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-b from-muted/30 to-transparent" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-size-[24px_24px] opacity-20" />
+        <div className="absolute left-0 right-0 top-0 h-px bg-linear-to-r from-transparent via-border to-transparent" />
 
         <div className="relative pt-24 pb-12 px-4">
           <motion.div
@@ -246,7 +246,7 @@ export default function TermsPage() {
 
       {/* Footer */}
       <footer className="py-10 mt-10">
-        <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        <div className="absolute left-0 right-0 h-px bg-linear-to-r from-transparent via-border to-transparent" />
         <div className="container max-w-3xl mx-auto px-4 pt-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">

@@ -1012,7 +1012,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           </Popover>
         )}
         <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-          <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-[450px]" showCloseButton={false}>
+          <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-112.5" showCloseButton={false}>
             <DialogHeader className="p-2">
               <div className="relative w-full p-6 rounded-md text-white overflow-hidden">
                 <div className="absolute inset-0 bg-[url('/placeholder.png')] bg-cover bg-center rounded-sm">
@@ -1129,7 +1129,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           </DialogContent>
         </Dialog>
         <Dialog open={showSignInDialog} onOpenChange={setShowSignInDialog}>
-          <DialogContent className="sm:max-w-[420px] p-0 gap-0 bg-background" showCloseButton={false}>
+          <DialogContent className="sm:max-w-105 p-0 gap-0 bg-background" showCloseButton={false}>
             <DialogHeader className="p-2">
               <div className="relative w-full p-6 rounded-md text-white overflow-hidden">
                 <div className="absolute inset-0 bg-[url('/placeholder.png')] bg-cover bg-center rounded-sm">
@@ -2031,7 +2031,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
       >
         <CommandInput placeholder="Search modes..." className="h-9" />
         <CommandEmpty>No search mode found.</CommandEmpty>
-        <CommandList className="max-h-[240px]">
+        <CommandList className="max-h-60">
           <CommandGroup>
             <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">Search Mode</div>
             {orderedVisibleGroups.map((group) => {
@@ -2134,7 +2134,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                 </TooltipTrigger>
                 <TooltipContent
                   side="bottom"
-                  className="max-w-[200px] rounded-lg border border-border bg-popover p-2 text-left [&_svg.bg-primary]:bg-popover! [&_svg.fill-primary]:fill-popover!"
+                  className="max-w-50 rounded-lg border border-border bg-popover p-2 text-left [&_svg.bg-primary]:bg-popover! [&_svg.fill-primary]:fill-popover!"
                 >
                   {groupTooltipContent}
                 </TooltipContent>
@@ -2243,7 +2243,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
                 </TooltipTrigger>
                 <TooltipContent
                   side="bottom"
-                  className="max-w-[200px] rounded-lg border border-border bg-popover p-2 text-left [&_svg.bg-primary]:bg-popover! [&_svg.fill-primary]:fill-popover!"
+                  className="max-w-50 rounded-lg border border-border bg-popover p-2 text-left [&_svg.bg-primary]:bg-popover! [&_svg.fill-primary]:fill-popover!"
                 >
                   {groupTooltipContent}
                 </TooltipContent>
@@ -2285,7 +2285,7 @@ const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
             </TooltipTrigger>
             <TooltipContent
               side="bottom"
-              className="max-w-[200px] rounded-lg border border-border bg-popover p-2 text-left [&_svg.bg-primary]:bg-popover! [&_svg.fill-primary]:fill-popover!"
+              className="max-w-50 rounded-lg border border-border bg-popover p-2 text-left [&_svg.bg-primary]:bg-popover! [&_svg.fill-primary]:fill-popover!"
             >
               {extremeTooltipContent}
             </TooltipContent>
@@ -4013,7 +4013,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         {/* Pro Upgrade Dialog */}
         <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-          <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-[450px]" showCloseButton={false}>
+          <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-112.5" showCloseButton={false}>
             <DialogHeader className="p-2">
               <div className="relative w-full p-6 rounded-md text-white overflow-hidden">
                 <div className="absolute inset-0 bg-[url('/placeholder.png')] bg-cover bg-center rounded-sm">
@@ -4116,7 +4116,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         {/* Sign In Dialog */}
         <Dialog open={showSignInDialog} onOpenChange={setShowSignInDialog}>
-          <DialogContent className="sm:max-w-[420px] p-0 gap-0 bg-background" showCloseButton={false}>
+          <DialogContent className="sm:max-w-105 p-0 gap-0 bg-background" showCloseButton={false}>
             <DialogHeader className="p-2">
               <div className="relative w-full p-6 rounded-md text-white overflow-hidden">
                 <div className="absolute inset-0 bg-[url('/placeholder.png')] bg-cover bg-center rounded-sm">

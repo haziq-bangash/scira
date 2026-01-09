@@ -491,7 +491,7 @@ export function PreferencesSection({
                         placeholder="Enter your custom instructions here... For example: 'Always provide code examples when explaining programming concepts' or 'Keep responses concise and focused on practical applications'"
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
-                        className="min-h-[100px] resize-y text-sm"
+                        className="min-h-25 resize-y text-sm"
                         style={{ maxHeight: '25dvh' }}
                         onFocus={(e) => {
                           // Keep the focused textarea within the drawer's scroll container without jumping the whole viewport
@@ -1074,7 +1074,7 @@ export function UsageSection({ user }: any) {
           </div>
           <div className={cn('bg-muted/50 dark:bg-card rounded-lg p-3 w-full')}>
             {historicalLoading ? (
-              <div className="h-[200px] flex items-center justify-center opacity-60">
+              <div className="h-50 flex items-center justify-center opacity-60">
                 <div className="text-center space-y-2">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
                   <p className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>
@@ -1084,7 +1084,7 @@ export function UsageSection({ user }: any) {
               </div>
             ) : chartData && chartData.length > 0 ? (
               <div className="w-full min-w-0 overflow-hidden">
-                <ChartContainer config={chartConfig} className="h-[200px] w-full min-w-0 flex-col! justify-start!">
+                <ChartContainer config={chartConfig} className="h-50 w-full min-w-0 flex-col! justify-start!">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={chartData} margin={{ top: 5, right: 5, left: isMobile ? 0 : 5, bottom: 5 }}>
                     <defs>
@@ -1172,7 +1172,7 @@ export function UsageSection({ user }: any) {
                 </ChartContainer>
               </div>
             ) : (
-              <div className="h-[200px] flex items-center justify-center">
+              <div className="h-50 flex items-center justify-center">
                 <p className={cn('text-muted-foreground', isMobile ? 'text-[11px]' : 'text-xs')}>No activity data</p>
               </div>
             )}
@@ -1985,7 +1985,7 @@ export function SettingsDialog({
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent
-          className="h-[85vh] max-h-[600px] p-0 data-vaul-drawer:transition-none overflow-hidden"
+          className="h-[85vh] max-h-150 p-0 data-vaul-drawer:transition-none overflow-hidden"
           style={{
             height: mobileDrawerPxHeight ?? undefined,
             maxHeight: mobileDrawerPxHeight ?? undefined,

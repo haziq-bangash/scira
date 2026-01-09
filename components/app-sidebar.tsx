@@ -908,7 +908,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
       {user && (
         <>
           <Dialog open={Boolean(renameTarget)} onOpenChange={(open) => (!open ? closeRenameDialog() : null)}>
-            <DialogContent className="sm:max-w-[420px]">
+            <DialogContent className="sm:max-w-105">
               <DialogHeader>
                 <DialogTitle>Edit title</DialogTitle>
               </DialogHeader>

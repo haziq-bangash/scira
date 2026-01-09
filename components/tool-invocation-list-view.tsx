@@ -181,11 +181,11 @@ export const NearbySearchSkeleton = ({ type }: { type: string }) => {
 
 // Modern code interpreter components
 const LineNumbers = memo(({ count }: { count: number }) => (
-  <div className="hidden sm:block select-none w-8 sm:w-10 flex-shrink-0 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/30 py-0">
+  <div className="hidden sm:block select-none w-8 sm:w-10 shrink-0 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/30 py-0">
     {Array.from({ length: count }, (_, i) => (
       <div
         key={i}
-        className="text-[10px] h-[20px] flex items-center justify-end text-neutral-500 dark:text-neutral-400 pr-2 font-mono"
+        className="text-[10px] h-5 flex items-center justify-end text-neutral-500 dark:text-neutral-400 pr-2 font-mono"
       >
         {i + 1}
       </div>
@@ -221,7 +221,7 @@ const CodeBlock = memo(({ code }: { code: string; language: string }) => {
     <div className="flex bg-neutral-50 dark:bg-neutral-900/70">
       <LineNumbers count={lines.length} />
       <div className="overflow-x-auto w-full">
-        <pre className="py-0 px-2 sm:px-3 m-0 font-mono text-[11px] sm:text-xs leading-[20px] text-neutral-800 dark:text-neutral-300">
+        <pre className="py-0 px-2 sm:px-3 m-0 font-mono text-[11px] sm:text-xs leading-5 text-neutral-800 dark:text-neutral-300">
           {code}
         </pre>
       </div>
@@ -236,7 +236,7 @@ const OutputBlock = memo(({ output, error }: { output?: string; error?: string }
   return (
     <div
       className={cn(
-        'font-mono text-[11px] sm:text-xs leading-[20px] py-0 px-2 sm:px-3',
+        'font-mono text-[11px] sm:text-xs leading-5 py-0 px-2 sm:px-3',
         error
           ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
           : 'bg-neutral-100 dark:bg-neutral-800/50 text-neutral-700 dark:text-neutral-300',
@@ -290,7 +290,7 @@ export function CodeInterpreterView({
               {language}
             </div>
           </div>
-          <h3 className="text-xs font-medium text-neutral-700 dark:text-neutral-200 truncate max-w-[160px] sm:max-w-xs">
+          <h3 className="text-xs font-medium text-neutral-700 dark:text-neutral-200 truncate max-w-40 sm:max-w-xs">
             {title || 'Code Execution'}
           </h3>
           <StatusBadge status={status || 'completed'} />

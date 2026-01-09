@@ -473,7 +473,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                         <TooltipContent side="bottom" sideOffset={4}>Export</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
-                    <DropdownMenuContent className="min-w-[140px]" align="start" sideOffset={4}>
+                    <DropdownMenuContent className="min-w-35" align="start" sideOffset={4}>
                       <DropdownMenuItem
                         className="cursor-pointer gap-2"
                         onClick={async () => {
@@ -845,7 +845,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     </div>
 
                     {/* Map */}
-                    <div className="relative h-[360px] sm:h-[400px] bg-[hsl(var(--muted))]">
+                    <div className="relative h-90 sm:h-100 bg-[hsl(var(--muted))]">
                       <MapComponent
                         center={{ lat: places[0].location.lat, lng: places[0].location.lng }}
                         places={places.map((place: any) => ({
@@ -1054,12 +1054,12 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     <CardContent className="p-0">
                       <div className="px-3 sm:px-4">
                         <div className="h-8 w-full bg-neutral-200 dark:bg-neutral-800 rounded-lg animate-pulse mb-4" />
-                        <div className="h-[180px] w-full bg-neutral-200 dark:bg-neutral-800 rounded-lg animate-pulse" />
+                        <div className="h-45 w-full bg-neutral-200 dark:bg-neutral-800 rounded-lg animate-pulse" />
                         <div className="flex justify-between mt-4 pb-4 overflow-x-auto no-scrollbar">
                           {[...Array(5)].map((_, i) => (
                             <div
                               key={i}
-                              className="flex flex-col items-center min-w-[60px] sm:min-w-[70px] p-1.5 sm:p-2 mx-0.5"
+                              className="flex flex-col items-center min-w-15 sm:min-w-17.5 p-1.5 sm:p-2 mx-0.5"
                             >
                               <div className="h-4 w-12 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse mb-2" />
                               <div className="h-8 w-8 rounded-full bg-neutral-200 dark:bg-neutral-800 animate-pulse mb-2" />
@@ -1323,7 +1323,19 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   />
                 );
               case 'output-available':
-                return <TrendingResults result={part.output} type="movie" key={`${messageIndex}-${partIndex}-tool`} />;
+                return (
+                  <TrendingResults
+                    result={{
+                      results: part.output.results.map((item: any) => ({
+                        ...item,
+                        genre_ids: item.genre_ids || [],
+                        popularity: item.popularity || 0,
+                      })),
+                    }}
+                    type="movie"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  />
+                );
             }
             break;
 
@@ -1345,7 +1357,19 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   />
                 );
               case 'output-available':
-                return <TrendingResults result={part.output} type="tv" key={`${messageIndex}-${partIndex}-tool`} />;
+                return (
+                  <TrendingResults
+                    result={{
+                      results: part.output.results.map((item: any) => ({
+                        ...item,
+                        genre_ids: item.genre_ids || [],
+                        popularity: item.popularity || 0,
+                      })),
+                    }}
+                    type="tv"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  />
+                );
             }
             break;
 
@@ -2256,7 +2280,7 @@ const CodeContextTool: React.FC<{ args: any; result: any }> = ({ args, result })
               <div className="flex items-center gap-2 text-xs">
                 <span className="font-medium text-neutral-900 dark:text-neutral-100">Code Context</span>
                 <span className="text-neutral-400">•</span>
-                <span className="text-neutral-500 dark:text-neutral-400 truncate max-w-[200px]">
+                <span className="text-neutral-500 dark:text-neutral-400 truncate max-w-50">
                   {args ? args.query : ''}
                 </span>
               </div>
