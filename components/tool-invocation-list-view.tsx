@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React, { memo, useEffect, useState, lazy } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
 
@@ -68,7 +68,7 @@ export const SearchLoadingState = ({
   const variant = colorVariants[color];
 
   return (
-    <Card className="relative w-full h-[100px] my-4 overflow-hidden shadow-none">
+    <Card className="relative w-full h-25 my-4 overflow-hidden shadow-none">
       <BorderTrail className={cn('bg-linear-to-l', variant.border)} size={80} />
       <CardContent className="px-6!">
         <div className="relative flex items-center justify-between">
@@ -126,7 +126,7 @@ export const NearbySearchSkeleton = ({ type }: { type: string }) => {
       <div className="w-full h-full flex flex-col">
         {/* Map area */}
         <div className="relative flex-1 min-h-[45%] bg-neutral-100 dark:bg-neutral-800 animate-pulse">
-          <div className="absolute inset-0 bg-gradient-to-br from-neutral-200 dark:from-neutral-700 to-transparent opacity-50" />
+          <div className="absolute inset-0 bg-linear-to-br from-neutral-200 dark:from-neutral-700 to-transparent opacity-50" />
 
           {/* Mock markers */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">

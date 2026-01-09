@@ -1,4 +1,4 @@
-import { Supadata } from '@supadata/js';
+import Exa from 'exa-js';
 import { tool } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
@@ -45,43 +45,83 @@ interface SubtitleFragment {
 
 type TimeRange = 'day' | 'week' | 'month' | 'year' | 'anytime';
 
-interface SupadataYouTubeChannel {
-  id?: string;
-  name?: string;
-  thumbnail?: string;
-  url?: string;
-}
-
-interface SupadataYouTubeVideo {
-  type?: string;
-  id?: string;
-  title?: string;
-  description?: string;
-  thumbnail?: string;
-  duration?: number;
-  viewCount?: number;
-  uploadDate?: string;
-  channel?: SupadataYouTubeChannel;
-  tags?: string[];
-  url?: string;
-}
-
 const BATCH_SIZE = 4;
 const SEARCH_LIMIT = 12;
 const YOUTUBE_BASE_URL = 'https://www.youtube.com/watch?v=';
-const searchModeEnum = z.enum(['general', 'channel', 'playlist']);
-const channelVideoTypeEnum = z.enum(['all', 'video', 'short', 'live']);
-type SearchMode = z.infer<typeof searchModeEnum>;
-type ChannelVideoType = z.infer<typeof channelVideoTypeEnum>;
-
-const timeRangeToUploadDate: Record<Exclude<TimeRange, 'anytime'>, 'hour' | 'today' | 'week' | 'month' | 'year'> = {
-  day: 'today',
-  week: 'week',
-  month: 'month',
-  year: 'year',
-};
+const YOUTUBE_VIDEO_ID_REGEX = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/;
 
 const chapterRegex = /^\s*((?:\d+:)?\d{1,2}:\d{2})\s*[-–—]?\s*(.+)$/i;
+
+// Helper to extract video ID from YouTube URL
+function extractVideoId(url: string): string | null {
+  const match = url.match(YOUTUBE_VIDEO_ID_REGEX);
+  return match ? match[1] : null;
+}
+
+// Helper to convert TimeRange to date for Exa filtering
+function getStartDateFromTimeRange(timeRange: TimeRange): string | undefined {
+  if (timeRange === 'anytime') return undefined;
+  
+  const now = new Date();
+  let daysAgo: number;
+  
+  switch (timeRange) {
+    case 'day':
+      daysAgo = 1;
+      break;
+    case 'week':
+      daysAgo = 7;
+      break;
+    case 'month':
+      daysAgo = 30;
+      break;
+    case 'year':
+      daysAgo = 365;
+      break;
+    default:
+      return undefined;
+  }
+  
+  const startDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+  return startDate.toISOString();
+}
+
+// Fetch video metadata from YouTube Data API (optional enhancement)
+async function fetchYouTubeMetadata(videoId: string): Promise<{
+  viewCount?: number;
+  likeCount?: number;
+  channelTitle?: string;
+  channelId?: string;
+  publishedAt?: string;
+  tags?: string[];
+} | null> {
+  if (!serverEnv.YOUTUBE_API_KEY) return null;
+  
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=statistics,snippet&id=${videoId}&key=${serverEnv.YOUTUBE_API_KEY}`
+    );
+    
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    const video = data.items?.[0];
+    
+    if (!video) return null;
+    
+    return {
+      viewCount: parseInt(video.statistics?.viewCount || '0', 10),
+      likeCount: parseInt(video.statistics?.likeCount || '0', 10),
+      channelTitle: video.snippet?.channelTitle,
+      channelId: video.snippet?.channelId,
+      publishedAt: video.snippet?.publishedAt,
+      tags: video.snippet?.tags,
+    };
+  } catch (error) {
+    console.warn(`⚠️ YouTube API metadata fetch failed for ${videoId}:`, error);
+    return null;
+  }
+}
 
 function chunkArray<T>(items: T[], chunkSize: number): T[][] {
   const chunks: T[][] = [];
@@ -91,15 +131,8 @@ function chunkArray<T>(items: T[], chunkSize: number): T[][] {
   return chunks;
 }
 
-function dedupeVideos(videos: SupadataYouTubeVideo[]) {
-  const seen = new Set<string>();
-  return videos.filter((video) => {
-    const videoId = video.id;
-    if (!videoId) return false;
-    if (seen.has(videoId)) return false;
-    seen.add(videoId);
-    return true;
-  });
+function dedupeVideos(videoIds: string[]): string[] {
+  return Array.from(new Set(videoIds));
 }
 
 function extractChaptersFromDescription(description?: string): string[] | undefined {
@@ -192,316 +225,123 @@ async function buildTranscriptArtifacts(videoId: string, fallbackDescription?: s
   };
 }
 
-function mapTimeRangeToSupadata(timeRange: TimeRange) {
-  if (timeRange === 'anytime') return undefined;
-  return timeRangeToUploadDate[timeRange];
-}
-
-function resolveNumber(value: unknown): number | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
-  }
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : undefined;
-  }
-  return undefined;
-}
-
-function flattenVideoIds(ids?: { videoIds?: string[]; shortIds?: string[]; liveIds?: string[] }) {
-  if (!ids) return [];
-  return [...(ids.videoIds ?? []), ...(ids.shortIds ?? []), ...(ids.liveIds ?? [])];
-}
-
-function normalizeHandle(query: string) {
-  return query.trim().replace(/^@/, '');
-}
-
-function extractPlaylistId(query: string) {
-  const trimmed = query.trim();
-  if (!trimmed) return null;
-  const urlMatch = trimmed.match(/[?&]list=([^&]+)/i);
-  if (urlMatch?.[1]) {
-    return urlMatch[1];
-  }
-  if (trimmed.startsWith('PL') || trimmed.startsWith('UU') || trimmed.startsWith('LL')) {
-    return trimmed;
-  }
-  return null;
-}
-
-async function resolveChannelIdFromQuery(supadata: Supadata, query: string) {
-  const normalized = normalizeHandle(query);
-  if (!normalized) return null;
-
+// Search YouTube videos using Exa
+async function searchYouTubeVideos(query: string, timeRange: TimeRange): Promise<string[]> {
   try {
-    const searchResult = await supadata.youtube.search({
-      query: normalized,
-      type: 'channel',
-      limit: 5,
-      sortBy: 'relevance',
-    });
-
-    const channelResults = (searchResult?.results ?? []) as Array<{
-      type?: string;
-      id?: string;
-      handle?: string;
-      name?: string;
-    }>;
-
-    const cleanedHandle = normalized.toLowerCase();
-
-    const handleMatch = channelResults.find((result) => {
-      if (result.type !== 'channel' || !result.handle) return false;
-      const candidate = result.handle.replace(/^@/, '').toLowerCase();
-      return candidate === cleanedHandle;
-    });
-
-    const chosenChannel = handleMatch ?? channelResults.find((result) => result.type === 'channel');
-    if (!chosenChannel) return null;
-    return chosenChannel.id || chosenChannel.handle || null;
-  } catch (error) {
-    console.warn('⚠️ Failed to resolve channel ID from query', { query, error });
-    return null;
-  }
-}
-
-async function resolvePlaylistIdFromQuery(supadata: Supadata, query: string) {
-  const playlistId = extractPlaylistId(query);
-  if (playlistId) return playlistId;
-
-  const trimmed = query.trim();
-  if (!trimmed) return null;
-
-  try {
-    const searchResult = await supadata.youtube.search({
-      query: trimmed,
-      type: 'playlist',
-      limit: 5,
-      sortBy: 'relevance',
-    });
-
-    const playlistResults = (searchResult?.results ?? []) as Array<{
-      type?: string;
-      id?: string;
-      title?: string;
-    }>;
-
-    const chosenPlaylist = playlistResults.find((result) => result.type === 'playlist');
-    return chosenPlaylist?.id ?? null;
-  } catch (error) {
-    console.warn('⚠️ Failed to resolve playlist ID from query', { query, error });
-    return null;
-  }
-}
-
-async function getVideosForMode({
-  supadata,
-  query,
-  timeRange,
-  mode,
-  channelVideoType,
-}: {
-  supadata: Supadata;
-  query: string;
-  timeRange: TimeRange;
-  mode: SearchMode;
-  channelVideoType?: ChannelVideoType;
-}) {
-  if (mode === 'general') {
-    const uploadDateFilter = mapTimeRangeToSupadata(timeRange);
-    const searchResult = await supadata.youtube.search({
-      query,
-      type: 'video',
-      ...(uploadDateFilter ? { uploadDate: uploadDateFilter } : {}),
-      limit: SEARCH_LIMIT,
-      sortBy: 'relevance',
-    });
-
-    const rawVideos = (searchResult?.results ?? []) as SupadataYouTubeVideo[];
-    return dedupeVideos(rawVideos.filter((result) => result.type === 'video'));
-  }
-
-  const fetchChannelVideos = async (channelQuery: string) => {
-    if (!channelQuery.trim()) return [];
-    try {
-      const ids = await supadata.youtube.channel.videos({
-        id: channelQuery,
-        limit: SEARCH_LIMIT,
-        type: channelVideoType ?? 'all',
-      });
-      return flattenVideoIds(ids);
-    } catch (error) {
-      console.warn('⚠️ Supadata channel.videos failed', { channelQuery, error });
+    const exa = new Exa(serverEnv.EXA_API_KEY);
+    
+    // Add "video" to query for better targeting
+    const enhancedQuery = `${query} video`;
+    
+    const searchOptions: any = {
+      numResults: SEARCH_LIMIT * 2, // Request more to account for filtering
+      includeDomains: ['youtube.com', 'youtu.be'],
+      useAutoprompt: false,
+    };
+    
+    // Add date filtering if not anytime
+    const startDate = getStartDateFromTimeRange(timeRange);
+    if (startDate) {
+      searchOptions.startPublishedDate = startDate;
+    }
+    
+    console.log('🔎 Exa YouTube search', { query, timeRange, enhancedQuery, searchOptions });
+    
+    const results = await exa.searchAndContents(enhancedQuery, searchOptions);
+    
+    if (!results?.results || results.results.length === 0) {
+      console.log('ℹ️ Exa returned no results for YouTube search');
       return [];
     }
-  };
-
-  const fetchPlaylistVideos = async (playlistId: string | null) => {
-    if (!playlistId) return [];
-    try {
-      const ids = await supadata.youtube.playlist.videos({
-        id: playlistId,
-        limit: SEARCH_LIMIT,
-      });
-      return flattenVideoIds(ids);
-    } catch (error) {
-      console.warn('⚠️ Supadata playlist.videos failed', { playlistId, error });
-      return [];
+    
+    // Extract video IDs from URLs
+    const videoIds: string[] = [];
+    for (const result of results.results) {
+      if (result.url) {
+        const videoId = extractVideoId(result.url);
+        if (videoId) {
+          videoIds.push(videoId);
+        }
+      }
     }
-  };
-
-  const normalizedIds =
-    mode === 'channel'
-      ? await (async () => {
-          // First, try to resolve the channel identifier from the query
-          const resolvedId = await resolveChannelIdFromQuery(supadata, query);
-          const channelIdentifier = resolvedId || query;
-
-          // Now fetch videos using the resolved identifier
-          const ids = await fetchChannelVideos(channelIdentifier);
-          return ids;
-        })()
-      : await (async () => {
-          const preExtractedId = extractPlaylistId(query);
-          const directIds = await fetchPlaylistVideos(preExtractedId ?? query);
-          if (directIds.length > 0) return directIds;
-
-          const resolvedId = await resolvePlaylistIdFromQuery(supadata, query);
-          if (!resolvedId) return directIds;
-          return fetchPlaylistVideos(resolvedId);
-        })();
-
-  if (normalizedIds.length === 0) {
-    console.warn(`⚠️ No video IDs resolved for mode="${mode}". Falling back to general search.`);
-    return getVideosForMode({
-      supadata,
-      query,
-      timeRange,
-      mode: 'general',
-    });
+    
+    // Deduplicate and limit
+    const uniqueIds = dedupeVideos(videoIds).slice(0, SEARCH_LIMIT);
+    
+    console.log(`🎥 Extracted ${uniqueIds.length} unique video IDs from Exa results`);
+    
+    return uniqueIds;
+  } catch (error) {
+    console.error('❌ Exa YouTube search failed:', error);
+    return [];
   }
-
-  const uniqueIds = Array.from(new Set(normalizedIds)).slice(0, SEARCH_LIMIT);
-  return uniqueIds.map((id) => ({
-    id,
-    type: 'video',
-    url: `${YOUTUBE_BASE_URL}${id}`,
-  }));
 }
 
 export const youtubeSearchTool = tool({
-  description: 'Search YouTube videos using Supadata and enrich them with transcripts, stats, and metadata.',
+  description: 'Search YouTube videos using Exa and enrich them with transcripts, chapters, and metadata. Optionally fetches view counts and stats from YouTube Data API if available.',
   inputSchema: z.object({
     query: z.string().describe('The search query for YouTube videos'),
-    timeRange: z.enum(['day', 'week', 'month', 'year', 'anytime']),
-    mode: searchModeEnum.default('general').describe('general search, channel videos, or playlist videos'),
-    channelVideoType: channelVideoTypeEnum.optional().describe('When mode=channel, filter to video/short/live/all'),
+    timeRange: z.enum(['day', 'week', 'month', 'year', 'anytime']).default('anytime').describe('Time range filter for video uploads. Use "day" for last 24 hours, "week" for last 7 days, "month" for last 30 days, "year" for last 365 days, or "anytime" for all time. Default is "anytime".'),
   }),
-  execute: async ({
-    query,
-    timeRange,
-    mode = 'general',
-    channelVideoType,
-  }: {
-    query: string;
-    timeRange: 'day' | 'week' | 'month' | 'year' | 'anytime';
-    mode?: SearchMode;
-    channelVideoType?: ChannelVideoType;
-  }) => {
+  execute: async ({ query, timeRange = 'anytime' }: { query: string; timeRange?: TimeRange }) => {
     try {
-      const supadata = new Supadata({
-        apiKey: serverEnv.SUPADATA_API_KEY,
-      });
+      // Search for YouTube videos using Exa
+      const videoIds = await searchYouTubeVideos(query, timeRange);
 
-      console.log('🔎 Supadata YouTube search', { query, timeRange, mode, channelVideoType });
-
-      const videoResults = await getVideosForMode({
-        supadata,
-        query,
-        timeRange,
-        mode,
-        channelVideoType,
-      });
-
-      if (videoResults.length === 0) {
-        console.log('ℹ️ Supadata returned no video IDs for the provided input');
+      if (videoIds.length === 0) {
+        console.log('ℹ️ No video IDs found for the provided query');
         return { results: [] };
       }
 
-      console.log(`🎥 Resolved ${videoResults.length} video candidates for mode="${mode}"`);
+      console.log(`🎥 Processing ${videoIds.length} video IDs`);
 
-      const batches = chunkArray(videoResults, BATCH_SIZE);
+      const batches = chunkArray(videoIds, BATCH_SIZE);
       const processedResults: VideoResult[] = [];
 
       for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
         const batch = batches[batchIndex];
         try {
           const batchResults = await Promise.allSettled(
-            batch.map(async (video): Promise<VideoResult | null> => {
-              const videoId = video.id;
-              if (!videoId) {
-                console.warn('⚠️ Video missing ID from Supadata result, skipping');
-                return null;
-              }
-
+            batch.map(async (videoId): Promise<VideoResult | null> => {
               const videoUrl = `${YOUTUBE_BASE_URL}${videoId}`;
 
               const baseResult: VideoResult = {
                 videoId,
-                url: video.url ?? videoUrl,
-                publishedDate: video.uploadDate,
+                url: videoUrl,
               };
 
               try {
-                const [transcripts, metadata] = await Promise.all([
-                  buildTranscriptArtifacts(videoId, video.description),
-                  supadata.metadata({ url: video.url ?? videoUrl }).catch((error: unknown) => {
-                    console.warn(`⚠️ Supadata metadata failed for ${videoId}:`, error);
-                    return null;
-                  }),
+                // Fetch transcripts and YouTube API metadata in parallel
+                const [transcripts, youtubeApiData] = await Promise.all([
+                  buildTranscriptArtifacts(videoId),
+                  fetchYouTubeMetadata(videoId),
                 ]);
 
-                const metadataAuthor = metadata?.author;
-                const metadataStats = metadata?.stats;
-                const metadataMedia = metadata?.media as { duration?: number; thumbnailUrl?: string } | undefined;
-
-                const stats: VideoStats | undefined =
-                  metadataStats != null || video.viewCount != null
-                    ? {
-                        views: resolveNumber(metadataStats?.views ?? video.viewCount),
-                        likes: resolveNumber(metadataStats?.likes),
-                        comments: resolveNumber(metadataStats?.comments),
-                        shares: resolveNumber(metadataStats?.shares),
-                      }
-                    : undefined;
+                const stats: VideoStats | undefined = youtubeApiData
+                  ? {
+                      views: youtubeApiData.viewCount,
+                      likes: youtubeApiData.likeCount,
+                    }
+                  : undefined;
 
                 const processedVideo: VideoResult = {
                   ...baseResult,
                   details: {
-                    title: metadata?.title ?? video.title,
-                    author_name: metadataAuthor?.displayName ?? video.channel?.name,
-                    author_url:
-                      metadataAuthor?.username
-                        ? `https://www.youtube.com/@${metadataAuthor.username}`
-                        : video.channel?.id
-                          ? `https://www.youtube.com/channel/${video.channel.id}`
-                          : video.channel?.url,
-                    thumbnail_url:
-                      metadataMedia?.thumbnailUrl ??
-                      video.thumbnail ??
-                      `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                    title: transcripts.description?.split('\n')[0] || 'YouTube Video',
+                    author_name: youtubeApiData?.channelTitle,
+                    author_url: youtubeApiData?.channelId
+                      ? `https://www.youtube.com/channel/${youtubeApiData.channelId}`
+                      : undefined,
+                    thumbnail_url: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
                     provider_name: 'YouTube',
                     provider_url: 'https://www.youtube.com',
-                    author_avatar_url: metadataAuthor?.avatarUrl ?? video.channel?.thumbnail,
                   },
                   captions: transcripts.transcriptText,
                   timestamps: transcripts.timestamps,
-                  summary: metadata?.description ?? video.description,
-                  publishedDate: metadata?.createdAt ?? video.uploadDate,
-                  durationSeconds: metadataMedia?.duration ?? video.duration,
+                  summary: transcripts.description,
+                  publishedDate: youtubeApiData?.publishedAt,
                   stats,
-                  tags: metadata?.tags ?? video.tags,
+                  tags: youtubeApiData?.tags,
                 };
 
                 if (processedVideo.stats?.views != null) {
@@ -529,7 +369,7 @@ export const youtubeSearchTool = tool({
         }
       }
 
-      console.log(`🏁 Supadata processing completed with ${processedResults.length} enriched videos`);
+      console.log(`🏁 YouTube search completed with ${processedResults.length} enriched videos`);
 
       return {
         results: processedResults,
