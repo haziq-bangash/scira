@@ -18,10 +18,9 @@ export function RovoLogo({
       x="0px"
       y="0px"
       className={className}
-      fill="#282828"
+      fill={color}
       width={width}
       height={height}
-      color={color}
       viewBox="0 0 1280 800"
       style={{ display: 'block', overflow: 'visible' }}
       xmlSpace="preserve"

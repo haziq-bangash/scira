@@ -1,72 +1,44 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useRef } from "react"
-import { useTexture } from "@react-three/drei"
-import { Canvas, useFrame, useThree } from "@react-three/fiber"
-import * as THREE from "three"
+import React, { useEffect, useRef, FC } from "react";
+import { Renderer, Program, Mesh, Triangle, Vec3 } from "ogl";
+import { cn } from "@/lib/utils";
+import { CALL_STATUS } from "@/hooks/use-vapi";
 
-export type AgentState = null | "thinking" | "listening" | "talking"
+export type AgentState = null | "thinking" | "listening" | "talking";
 
-type OrbProps = {
-  colors?: [string, string]
-  colorsRef?: React.RefObject<[string, string]>
-  resizeDebounce?: number
-  seed?: number
-  agentState?: AgentState
-  volumeMode?: "auto" | "manual"
-  manualInput?: number
-  manualOutput?: number
-  inputVolumeRef?: React.RefObject<number>
-  outputVolumeRef?: React.RefObject<number>
-  getInputVolume?: () => number
-  getOutputVolume?: () => number
-  className?: string
+interface OrbProps {
+  className?: string;
+  hue?: number;
+  enableVoiceControl?: boolean;
+  voiceSensitivity?: number;
+  maxRotationSpeed?: number;
+  maxHoverIntensity?: number;
+  onVoiceDetected?: (detected: boolean) => void;
+  colors?: [string, string];
+  colorsRef?: React.RefObject<[string, string]>;
+  seed?: number;
+  agentState?: AgentState;
+  volumeMode?: "auto" | "manual";
+  manualInput?: number;
+  manualOutput?: number;
+  inputVolumeRef?: React.RefObject<number>;
+  outputVolumeRef?: React.RefObject<number>;
+  getInputVolume?: () => number;
+  getOutputVolume?: () => number;
+  toggleCall?: () => void;
+  callStatus?: CALL_STATUS;
+  audioLevel?: number;
 }
 
-export function Orb({
-  colors = ["#CADCFC", "#A0B9D1"],
-  colorsRef,
-  resizeDebounce = 100,
-  seed,
-  agentState = null,
-  volumeMode = "auto",
-  manualInput,
-  manualOutput,
-  inputVolumeRef,
-  outputVolumeRef,
-  getInputVolume,
-  getOutputVolume,
+export const Orb: FC<OrbProps> = ({
   className,
-}: OrbProps) {
-  return (
-    <div className={className ?? "relative h-full w-full"}>
-      <Canvas
-        resize={{ debounce: resizeDebounce }}
-        gl={{
-          alpha: true,
-          antialias: true,
-          premultipliedAlpha: true,
-        }}
-      >
-        <Scene
-          colors={colors}
-          colorsRef={colorsRef}
-          seed={seed}
-          agentState={agentState}
-          volumeMode={volumeMode}
-          manualInput={manualInput}
-          manualOutput={manualOutput}
-          inputVolumeRef={inputVolumeRef}
-          outputVolumeRef={outputVolumeRef}
-          getInputVolume={getInputVolume}
-          getOutputVolume={getOutputVolume}
-        />
-      </Canvas>
-    </div>
-  )
-}
-
-function Scene({
+  hue = 0,
+  enableVoiceControl = true,
+  voiceSensitivity = 1.5,
+  maxRotationSpeed = 1.2,
+  maxHoverIntensity = 0.8,
+  onVoiceDetected,
   colors,
   colorsRef,
   seed,
@@ -78,421 +50,494 @@ function Scene({
   outputVolumeRef,
   getInputVolume,
   getOutputVolume,
-}: {
-  colors: [string, string]
-  colorsRef?: React.RefObject<[string, string]>
-  seed?: number
-  agentState: AgentState
-  volumeMode: "auto" | "manual"
-  manualInput?: number
-  manualOutput?: number
-  inputVolumeRef?: React.RefObject<number>
-  outputVolumeRef?: React.RefObject<number>
-  getInputVolume?: () => number
-  getOutputVolume?: () => number
-}) {
-  const { gl } = useThree()
-  const circleRef =
-    useRef<THREE.Mesh<THREE.CircleGeometry, THREE.ShaderMaterial>>(null)
-  const initialColorsRef = useRef<[string, string]>(colors)
-  const targetColor1Ref = useRef(new THREE.Color(colors[0]))
-  const targetColor2Ref = useRef(new THREE.Color(colors[1]))
-  const animSpeedRef = useRef(0.1)
-  const perlinNoiseTexture = useTexture(
-    "https://storage.googleapis.com/eleven-public-cdn/images/perlin-noise.png"
-  )
+  toggleCall,
+  callStatus,
+  audioLevel,
+}) => {
+  const ctnDom = useRef<HTMLDivElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const microphoneRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
 
-  const agentRef = useRef<AgentState>(agentState)
-  const modeRef = useRef<"auto" | "manual">(volumeMode)
-  const manualInRef = useRef<number>(manualInput ?? 0)
-  const manualOutRef = useRef<number>(manualOutput ?? 0)
-  const curInRef = useRef(0)
-  const curOutRef = useRef(0)
+  const vert = /* glsl */ `
+    precision highp float;
+    attribute vec2 position;
+    attribute vec2 uv;
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = vec4(position, 0.0, 1.0);
+    }
+  `;
 
-  useEffect(() => {
-    agentRef.current = agentState
-  }, [agentState])
+  const frag = /* glsl */ `
+    precision highp float;
 
-  useEffect(() => {
-    modeRef.current = volumeMode
-  }, [volumeMode])
+    uniform float iTime;
+    uniform vec3 iResolution;
+    uniform float hue;
+    uniform float hover;
+    uniform float rot;
+    uniform float hoverIntensity;
+    varying vec2 vUv;
 
-  useEffect(() => {
-    manualInRef.current = clamp01(
-      manualInput ?? inputVolumeRef?.current ?? getInputVolume?.() ?? 0
-    )
-  }, [manualInput, inputVolumeRef, getInputVolume])
-
-  useEffect(() => {
-    manualOutRef.current = clamp01(
-      manualOutput ?? outputVolumeRef?.current ?? getOutputVolume?.() ?? 0
-    )
-  }, [manualOutput, outputVolumeRef, getOutputVolume])
-
-  const random = useMemo(
-    () => splitmix32(seed ?? Math.floor(Math.random() * 2 ** 32)),
-    [seed]
-  )
-  const offsets = useMemo(
-    () =>
-      new Float32Array(Array.from({ length: 7 }, () => random() * Math.PI * 2)),
-    [random]
-  )
-
-  useEffect(() => {
-    targetColor1Ref.current = new THREE.Color(colors[0])
-    targetColor2Ref.current = new THREE.Color(colors[1])
-  }, [colors])
-
-  useEffect(() => {
-    const apply = () => {
-      if (!circleRef.current) return
-      const isDark = document.documentElement.classList.contains("dark")
-      circleRef.current.material.uniforms.uInverted.value = isDark ? 1 : 0
+    vec3 rgb2yiq(vec3 c) {
+      float y = dot(c, vec3(0.299, 0.587, 0.114));
+      float i = dot(c, vec3(0.596, -0.274, -0.322));
+      float q = dot(c, vec3(0.211, -0.523, 0.312));
+      return vec3(y, i, q);
     }
 
-    apply()
-
-    const observer = new MutationObserver(apply)
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    })
-    return () => observer.disconnect()
-  }, [])
-
-  useFrame((_, delta: number) => {
-    const mat = circleRef.current?.material
-    if (!mat) return
-    const live = colorsRef?.current
-    if (live) {
-      if (live[0]) targetColor1Ref.current.set(live[0])
-      if (live[1]) targetColor2Ref.current.set(live[1])
-    }
-    const u = mat.uniforms
-    u.uTime.value += delta * 0.5
-
-    if (u.uOpacity.value < 1) {
-      u.uOpacity.value = Math.min(1, u.uOpacity.value + delta * 2)
+    vec3 yiq2rgb(vec3 c) {
+      float r = c.x + 0.956 * c.y + 0.621 * c.z;
+      float g = c.x - 0.272 * c.y - 0.647 * c.z;
+      float b = c.x - 1.106 * c.y + 1.703 * c.z;
+      return vec3(r, g, b);
     }
 
-    let targetIn = 0
-    let targetOut = 0.3
-    if (modeRef.current === "manual") {
-      targetIn = clamp01(
-        manualInput ?? inputVolumeRef?.current ?? getInputVolume?.() ?? 0
-      )
-      targetOut = clamp01(
-        manualOutput ?? outputVolumeRef?.current ?? getOutputVolume?.() ?? 0
-      )
-    } else {
-      const t = u.uTime.value * 2
-      if (agentRef.current === null) {
-        targetIn = 0
-        targetOut = 0.3
-      } else if (agentRef.current === "listening") {
-        targetIn = clamp01(0.55 + Math.sin(t * 3.2) * 0.35)
-        targetOut = 0.45
-      } else if (agentRef.current === "talking") {
-        targetIn = clamp01(0.65 + Math.sin(t * 4.8) * 0.22)
-        targetOut = clamp01(0.75 + Math.sin(t * 3.6) * 0.22)
-      } else {
-        const base = 0.38 + 0.07 * Math.sin(t * 0.7)
-        const wander = 0.05 * Math.sin(t * 2.1) * Math.sin(t * 0.37 + 1.2)
-        targetIn = clamp01(base + wander)
-        targetOut = clamp01(0.48 + 0.12 * Math.sin(t * 1.05 + 0.6))
+    vec3 adjustHue(vec3 color, float hueDeg) {
+      float hueRad = hueDeg * 3.14159265 / 180.0;
+      vec3 yiq = rgb2yiq(color);
+      float cosA = cos(hueRad);
+      float sinA = sin(hueRad);
+      float i = yiq.y * cosA - yiq.z * sinA;
+      float q = yiq.y * sinA + yiq.z * cosA;
+      yiq.y = i;
+      yiq.z = q;
+      return yiq2rgb(yiq);
+    }
+
+    vec3 hash33(vec3 p3) {
+      p3 = fract(p3 * vec3(0.1031, 0.11369, 0.13787));
+      p3 += dot(p3, p3.yxz + 19.19);
+      return -1.0 + 2.0 * fract(vec3(
+        p3.x + p3.y,
+        p3.x + p3.z,
+        p3.y + p3.z
+      ) * p3.zyx);
+    }
+
+    float snoise3(vec3 p) {
+      const float K1 = 0.333333333;
+      const float K2 = 0.166666667;
+      vec3 i = floor(p + (p.x + p.y + p.z) * K1);
+      vec3 d0 = p - (i - (i.x + i.y + i.z) * K2);
+      vec3 e = step(vec3(0.0), d0 - d0.yzx);
+      vec3 i1 = e * (1.0 - e.zxy);
+      vec3 i2 = 1.0 - e.zxy * (1.0 - e);
+      vec3 d1 = d0 - (i1 - K2);
+      vec3 d2 = d0 - (i2 - K1);
+      vec3 d3 = d0 - 0.5;
+      vec4 h = max(0.6 - vec4(
+        dot(d0, d0),
+        dot(d1, d1),
+        dot(d2, d2),
+        dot(d3, d3)
+      ), 0.0);
+      vec4 n = h * h * h * h * vec4(
+        dot(d0, hash33(i)),
+        dot(d1, hash33(i + i1)),
+        dot(d2, hash33(i + i2)),
+        dot(d3, hash33(i + 1.0))
+      );
+      return dot(vec4(31.316), n);
+    }
+
+    vec4 extractAlpha(vec3 colorIn) {
+      float a = max(max(colorIn.r, colorIn.g), colorIn.b);
+      return vec4(colorIn.rgb / (a + 1e-5), a);
+    }
+
+    const vec3 baseColor1 = vec3(0.611765, 0.262745, 0.996078);
+    const vec3 baseColor2 = vec3(0.298039, 0.760784, 0.913725);
+    const vec3 baseColor3 = vec3(0.062745, 0.078431, 0.600000);
+    const float innerRadius = 0.6;
+    const float noiseScale = 0.65;
+
+    float light1(float intensity, float attenuation, float dist) {
+      return intensity / (1.0 + dist * attenuation);
+    }
+
+    float light2(float intensity, float attenuation, float dist) {
+      return intensity / (1.0 + dist * dist * attenuation);
+    }
+
+    vec4 draw(vec2 uv) {
+      vec3 color1 = adjustHue(baseColor1, hue);
+      vec3 color2 = adjustHue(baseColor2, hue);
+      vec3 color3 = adjustHue(baseColor3, hue);
+
+      float ang = atan(uv.y, uv.x);
+      float len = length(uv);
+      float invLen = len > 0.0 ? 1.0 / len : 0.0;
+
+      float n0 = snoise3(vec3(uv * noiseScale, iTime * 0.5)) * 0.5 + 0.5;
+      float r0 = mix(mix(innerRadius, 1.0, 0.4), mix(innerRadius, 1.0, 0.6), n0);
+      float d0 = distance(uv, (r0 * invLen) * uv);
+      float v0 = light1(1.0, 10.0, d0);
+      v0 *= smoothstep(r0 * 1.05, r0, len);
+      float cl = cos(ang + iTime * 2.0) * 0.5 + 0.5;
+
+      float a = iTime * -1.0;
+      vec2 pos = vec2(cos(a), sin(a)) * r0;
+      float d = distance(uv, pos);
+      float v1 = light2(1.5, 5.0, d);
+      v1 *= light1(1.0, 50.0, d0);
+
+      float v2 = smoothstep(1.0, mix(innerRadius, 1.0, n0 * 0.5), len);
+      float v3 = smoothstep(innerRadius, mix(innerRadius, 1.0, 0.5), len);
+
+      vec3 col = mix(color1, color2, cl);
+      col = mix(color3, col, v0);
+      col = (col + v1) * v2 * v3;
+      col = clamp(col, 0.0, 1.0);
+
+      return extractAlpha(col);
+    }
+
+    vec4 mainImage(vec2 fragCoord) {
+      vec2 center = iResolution.xy * 0.5;
+      float size = min(iResolution.x, iResolution.y);
+      vec2 uv = (fragCoord - center) / size * 2.0;
+
+      float angle = rot;
+      float s = sin(angle);
+      float c = cos(angle);
+      uv = vec2(c * uv.x - s * uv.y, s * uv.x + c * uv.y);
+
+      uv.x += hover * hoverIntensity * 0.1 * sin(uv.y * 10.0 + iTime);
+      uv.y += hover * hoverIntensity * 0.1 * sin(uv.x * 10.0 + iTime);
+
+      return draw(uv);
+    }
+
+    void main() {
+      vec2 fragCoord = vUv * iResolution.xy;
+      vec4 col = mainImage(fragCoord);
+      gl_FragColor = vec4(col.rgb * col.a, col.a);
+    }
+  `;
+
+  // Voice analysis function
+  const analyzeAudio = () => {
+    if (!analyserRef.current) return 0;
+
+    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    analyserRef.current.getByteFrequencyData(dataArray);
+
+    // Calculate RMS (Root Mean Square) for better voice detection
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+      const value = dataArray[i] / 255;
+      sum += value * value;
+    }
+    const rms = Math.sqrt(sum / dataArray.length);
+
+    // Apply sensitivity and boost the signal
+    const level = Math.min(rms * voiceSensitivity * 3.0, 1);
+
+    return level;
+  };
+
+  // Stop microphone and cleanup
+  const stopMicrophone = () => {
+    try {
+      // Stop all tracks in the media stream
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => {
+          track.stop();
+        });
+        mediaStreamRef.current = null;
       }
+
+      // Disconnect and cleanup audio nodes
+      if (microphoneRef.current) {
+        microphoneRef.current.disconnect();
+        microphoneRef.current = null;
+      }
+
+      if (analyserRef.current) {
+        analyserRef.current.disconnect();
+        analyserRef.current = null;
+      }
+
+      // Close audio context
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+      }
+
+      console.log('Microphone stopped and cleaned up');
+    } catch (error) {
+      console.warn('Error stopping microphone:', error);
     }
+  };
 
-    curInRef.current += (targetIn - curInRef.current) * 0.2
-    curOutRef.current += (targetOut - curOutRef.current) * 0.2
+  // Initialize microphone access
+  const initMicrophone = async () => {
+    try {
+      // Clean up any existing microphone first
+      stopMicrophone();
 
-    const targetSpeed = 0.1 + (1 - Math.pow(curOutRef.current - 1, 2)) * 0.9
-    animSpeedRef.current += (targetSpeed - animSpeedRef.current) * 0.12
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,  // Better for voice analysis
+          noiseSuppression: false,  // Better for voice analysis
+          autoGainControl: false,   // Better for voice analysis
+          sampleRate: 44100,
+        },
+      });
 
-    u.uAnimation.value += delta * animSpeedRef.current
-    u.uInputVolume.value = curInRef.current
-    u.uOutputVolume.value = curOutRef.current
-    u.uColor1.value.lerp(targetColor1Ref.current, 0.08)
-    u.uColor2.value.lerp(targetColor2Ref.current, 0.08)
-  })
+      // Store the stream reference for cleanup
+      mediaStreamRef.current = stream;
+
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+      // Resume audio context if needed
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
+
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      microphoneRef.current = audioContextRef.current.createMediaStreamSource(stream);
+
+      // Optimize for voice detection
+      analyserRef.current.fftSize = 512;  // Higher resolution
+      analyserRef.current.smoothingTimeConstant = 0.3;  // Less smoothing for responsiveness
+      analyserRef.current.minDecibels = -90;
+      analyserRef.current.maxDecibels = -10;
+
+      microphoneRef.current.connect(analyserRef.current);
+
+      console.log('Microphone initialized successfully');
+      return true;
+    } catch (error) {
+      console.warn("Microphone access denied or not available:", error);
+      return false;
+    }
+  };
 
   useEffect(() => {
-    const canvas = gl.domElement
-    const onContextLost = (event: Event) => {
-      event.preventDefault()
-      setTimeout(() => {
-        gl.forceContextRestore()
-      }, 1)
-    }
-    canvas.addEventListener("webglcontextlost", onContextLost, false)
-    return () =>
-      canvas.removeEventListener("webglcontextlost", onContextLost, false)
-  }, [gl])
+    const container = ctnDom.current;
+    if (!container) return;
 
-  const uniforms = useMemo(() => {
-    perlinNoiseTexture.wrapS = THREE.RepeatWrapping
-    perlinNoiseTexture.wrapT = THREE.RepeatWrapping
-    const isDark =
-      typeof document !== "undefined" &&
-      document.documentElement.classList.contains("dark")
-    return {
-      uColor1: new THREE.Uniform(new THREE.Color(initialColorsRef.current[0])),
-      uColor2: new THREE.Uniform(new THREE.Color(initialColorsRef.current[1])),
-      uOffsets: { value: offsets },
-      uPerlinTexture: new THREE.Uniform(perlinNoiseTexture),
-      uTime: new THREE.Uniform(0),
-      uAnimation: new THREE.Uniform(0.1),
-      uInverted: new THREE.Uniform(isDark ? 1 : 0),
-      uInputVolume: new THREE.Uniform(0),
-      uOutputVolume: new THREE.Uniform(0),
-      uOpacity: new THREE.Uniform(0),
+    let rendererInstance: Renderer | null = null;
+    let rafId: number;
+    let program: Program | null = null;
+
+    try {
+      rendererInstance = new Renderer({
+        alpha: true,
+        premultipliedAlpha: false,
+        antialias: true,
+        dpr: window.devicePixelRatio || 1
+      });
+      const glContext = rendererInstance.gl;
+      // Set clear color to transparent to avoid white flash
+      glContext.clearColor(0, 0, 0, 0);
+      // Enable alpha blending for proper transparency
+      glContext.enable(glContext.BLEND);
+      glContext.blendFunc(glContext.SRC_ALPHA, glContext.ONE_MINUS_SRC_ALPHA);
+
+      // Clear any existing canvas
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+      // Type guard: ensure canvas is HTMLCanvasElement before appending
+      if (glContext.canvas instanceof HTMLCanvasElement) {
+        container.appendChild(glContext.canvas);
+      }
+
+      const geometry = new Triangle(glContext);
+      program = new Program(glContext, {
+        vertex: vert,
+        fragment: frag,
+        uniforms: {
+          iTime: { value: 0 },
+          iResolution: {
+            value: new Vec3(
+              glContext.canvas.width,
+              glContext.canvas.height,
+              glContext.canvas.width / glContext.canvas.height
+            ),
+          },
+          hue: { value: hue },
+          hover: { value: 0 },
+          rot: { value: 0 },
+          hoverIntensity: { value: 0 },
+        },
+      });
+
+      const mesh = new Mesh(glContext, { geometry, program });
+
+      const resize = () => {
+        if (!container || !rendererInstance) return;
+        const glContext = rendererInstance.gl;
+        const dpr = window.devicePixelRatio || 1;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        if (width === 0 || height === 0) return;
+
+        rendererInstance.setSize(width * dpr, height * dpr);
+        if (glContext.canvas instanceof HTMLCanvasElement) {
+          glContext.canvas.style.width = width + "px";
+          glContext.canvas.style.height = height + "px";
+        }
+
+        if (program) {
+          program.uniforms.iResolution.value.set(
+            glContext.canvas.width,
+            glContext.canvas.height,
+            glContext.canvas.width / glContext.canvas.height
+          );
+        }
+      };
+      window.addEventListener("resize", resize);
+      resize();
+
+      let lastTime = 0;
+      let currentRot = 0;
+      let voiceLevel = 0;
+      const baseRotationSpeed = 0.3;
+      let isMicrophoneInitialized = false;
+
+      // Initialize or stop microphone based on voice control setting
+      if (enableVoiceControl) {
+        initMicrophone().then((success) => {
+          isMicrophoneInitialized = success;
+        });
+      } else {
+        // Stop microphone when voice control is disabled
+        stopMicrophone();
+        isMicrophoneInitialized = false;
+      }
+
+      const update = (t: number) => {
+        rafId = requestAnimationFrame(update);
+        if (!program) return;
+
+        const dt = (t - lastTime) * 0.001;
+        lastTime = t;
+        program.uniforms.iTime.value = t * 0.001;
+        program.uniforms.hue.value = hue;
+
+        // Handle voice input
+        if (enableVoiceControl && isMicrophoneInitialized) {
+          voiceLevel = analyzeAudio();
+
+          // Notify parent component about voice detection
+          if (onVoiceDetected) {
+            onVoiceDetected(voiceLevel > 0.1);
+          }
+
+          // Map voice level to rotation speed with more visible effect
+          const voiceRotationSpeed = baseRotationSpeed + (voiceLevel * maxRotationSpeed * 2.0);
+
+          // Always rotate when there's voice input, even at low levels
+          if (voiceLevel > 0.05) {
+            currentRot += dt * voiceRotationSpeed;
+          }
+
+          // Use voice level to drive hover effects for visual feedback
+          program.uniforms.hover.value = Math.min(voiceLevel * 2.0, 1.0);
+          program.uniforms.hoverIntensity.value = Math.min(voiceLevel * maxHoverIntensity * 0.8, maxHoverIntensity);
+        } else {
+          // Keep effects at 0 when not using voice control
+          program.uniforms.hover.value = 0;
+          program.uniforms.hoverIntensity.value = 0;
+          if (onVoiceDetected) {
+            onVoiceDetected(false);
+          }
+        }
+
+        program.uniforms.rot.value = currentRot;
+
+        if (rendererInstance) {
+          const glContext = rendererInstance.gl;
+          // Clear the canvas with transparent background before rendering
+          glContext.clear(glContext.COLOR_BUFFER_BIT | glContext.DEPTH_BUFFER_BIT);
+          rendererInstance.render({ scene: mesh });
+        }
+      };
+
+      rafId = requestAnimationFrame(update);
+
+      return () => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener("resize", resize);
+
+        // Clean up canvas safely
+        if (container && rendererInstance) {
+          const glContext = rendererInstance.gl;
+          if (glContext.canvas instanceof HTMLCanvasElement) {
+            try {
+              if (container.contains(glContext.canvas)) {
+                container.removeChild(glContext.canvas);
+              }
+            } catch (error) {
+              console.warn("Canvas cleanup error:", error);
+            }
+          }
+          
+          glContext.getExtension("WEBGL_lose_context")?.loseContext();
+        }
+
+        // Stop microphone and clean up audio resources
+        stopMicrophone();
+      };
+
+    } catch (error) {
+      console.error("Error initializing Voice Powered Orb:", error);
+      if (container && container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+      return () => {
+        window.removeEventListener("resize", () => {});
+      };
     }
-  }, [perlinNoiseTexture, offsets])
+  }, [
+    hue,
+    enableVoiceControl,
+    voiceSensitivity,
+    maxRotationSpeed,
+    maxHoverIntensity,
+    vert,
+    frag
+  ]);
+
+  // Handle microphone state changes separately
+  useEffect(() => {
+    let isMounted = true;
+
+    const handleMicrophoneState = async () => {
+      if (enableVoiceControl) {
+        const success = await initMicrophone();
+        if (!isMounted) return;
+        // Update the microphone state in the WebGL context if needed
+      } else {
+        stopMicrophone();
+      }
+    };
+
+    handleMicrophoneState();
+
+    return () => {
+      isMounted = false;
+      // Don't stop microphone here as it will be handled by the main cleanup
+    };
+  }, [enableVoiceControl]);
 
   return (
-    <mesh ref={circleRef}>
-      <circleGeometry args={[3.5, 64]} />
-      <shaderMaterial
-        uniforms={uniforms}
-        fragmentShader={fragmentShader}
-        vertexShader={vertexShader}
-        transparent={true}
-      />
-    </mesh>
-  )
-}
+    <div
+      ref={ctnDom}
+      className={cn(
+        "w-full h-full relative",
+        className
+      )}
+      onClick={toggleCall}
+    />
+  );
+};
 
-function splitmix32(a: number) {
-  return function () {
-    a |= 0
-    a = (a + 0x9e3779b9) | 0
-    let t = a ^ (a >>> 16)
-    t = Math.imul(t, 0x21f0aaad)
-    t = t ^ (t >>> 15)
-    t = Math.imul(t, 0x735a2d97)
-    return ((t = t ^ (t >>> 15)) >>> 0) / 4294967296
-  }
-}
-
-function clamp01(n: number) {
-  if (!Number.isFinite(n)) return 0
-  return Math.min(1, Math.max(0, n))
-}
-const vertexShader = /* glsl */ `
-uniform float uTime;
-uniform sampler2D uPerlinTexture;
-varying vec2 vUv;
-
-void main() {
-  vUv = uv;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}
-`
-
-const fragmentShader = /* glsl */ `
-uniform float uTime;
-uniform float uAnimation;
-uniform float uInverted;
-uniform float uOffsets[7];
-uniform vec3 uColor1;
-uniform vec3 uColor2;
-uniform float uInputVolume;
-uniform float uOutputVolume;
-uniform float uOpacity;
-uniform sampler2D uPerlinTexture;
-varying vec2 vUv;
-
-const float PI = 3.14159265358979323846;
-
-// Draw a single oval with soft edges and calculate its gradient color
-bool drawOval(vec2 polarUv, vec2 polarCenter, float a, float b, bool reverseGradient, float softness, out vec4 color) {
-    vec2 p = polarUv - polarCenter;
-    float oval = (p.x * p.x) / (a * a) + (p.y * p.y) / (b * b);
-
-    float edge = smoothstep(1.0, 1.0 - softness, oval);
-
-    if (edge > 0.0) {
-        float gradient = reverseGradient ? (1.0 - (p.x / a + 1.0) / 2.0) : ((p.x / a + 1.0) / 2.0);
-        // Flatten gradient toward middle value for more uniform appearance
-        gradient = mix(0.5, gradient, 0.1);
-        color = vec4(vec3(gradient), 0.85 * edge);
-        return true;
-    }
-    return false;
-}
-
-// Map grayscale value to a 4-color ramp (color1, color2, color3, color4)
-vec3 colorRamp(float grayscale, vec3 color1, vec3 color2, vec3 color3, vec3 color4) {
-    if (grayscale < 0.33) {
-        return mix(color1, color2, grayscale * 3.0);
-    } else if (grayscale < 0.66) {
-        return mix(color2, color3, (grayscale - 0.33) * 3.0);
-    } else {
-        return mix(color3, color4, (grayscale - 0.66) * 3.0);
-    }
-}
-
-vec2 hash2(vec2 p) {
-    return fract(sin(vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)))) * 43758.5453);
-}
-
-// 2D noise for the ring
-float noise2D(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    
-    vec2 u = f * f * (3.0 - 2.0 * f);
-    float n = mix(
-        mix(dot(hash2(i + vec2(0.0, 0.0)), f - vec2(0.0, 0.0)),
-            dot(hash2(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),
-        mix(dot(hash2(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)),
-            dot(hash2(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)), u.x),
-        u.y
-    );
-
-    return 0.5 + 0.5 * n;
-}
-
-float sharpRing(vec3 decomposed, float time) {
-    float ringStart = 1.0;
-    float ringWidth = 0.3;
-    float noiseScale = 5.0;
-
-    float noise = mix(
-        noise2D(vec2(decomposed.x, time) * noiseScale),
-        noise2D(vec2(decomposed.y, time) * noiseScale),
-        decomposed.z
-    );
-
-    noise = (noise - 0.5) * 2.5;
-
-    return ringStart + noise * ringWidth * 1.5;
-}
-
-float smoothRing(vec3 decomposed, float time) {
-    float ringStart = 0.9;
-    float ringWidth = 0.2;
-    float noiseScale = 6.0;
-
-    float noise = mix(
-        noise2D(vec2(decomposed.x, time) * noiseScale),
-        noise2D(vec2(decomposed.y, time) * noiseScale),
-        decomposed.z
-    );
-
-    noise = (noise - 0.5) * 5.0;
-
-    return ringStart + noise * ringWidth;
-}
-
-float flow(vec3 decomposed, float time) {
-    return mix(
-        texture(uPerlinTexture, vec2(time, decomposed.x / 2.0)).r,
-        texture(uPerlinTexture, vec2(time, decomposed.y / 2.0)).r,
-        decomposed.z
-    );
-}
-
-void main() {
-    // Normalize vUv to be centered around (0.0, 0.0)
-    vec2 uv = vUv * 2.0 - 1.0;
-
-    // Convert uv to polar coordinates
-    float radius = length(uv);
-    float theta = atan(uv.y, uv.x);
-    if (theta < 0.0) theta += 2.0 * PI; // Normalize theta to [0, 2*PI]
-
-    // Decomposed angle is used for sampling noise textures without seams:
-    // float noise = mix(sample(decomposed.x), sample(decomposed.y), decomposed.z);
-    vec3 decomposed = vec3(
-        // angle in the range [0, 1]
-        theta / (2.0 * PI),
-        // angle offset by 180 degrees in the range [1, 2]
-        mod(theta / (2.0 * PI) + 0.5, 1.0) + 1.0,
-        // mixing factor between two noises
-        abs(theta / PI - 1.0)
-    );
-
-    // Add noise to the angle for a flow-like distortion (reduced for flatter look)
-    float noise = flow(decomposed, radius * 0.03 - uAnimation * 0.2) - 0.5;
-    theta += noise * mix(0.08, 0.25, uOutputVolume);
-
-    // Initialize the base color to white
-    vec4 color = vec4(1.0, 1.0, 1.0, 1.0);
-
-    // Original parameters for the ovals in polar coordinates
-    float originalCenters[7] = float[7](0.0, 0.5 * PI, 1.0 * PI, 1.5 * PI, 2.0 * PI, 2.5 * PI, 3.0 * PI);
-
-    // Parameters for the animated centers in polar coordinates
-    float centers[7];
-    for (int i = 0; i < 7; i++) {
-        centers[i] = originalCenters[i] + 0.5 * sin(uTime / 20.0 + uOffsets[i]);
-    }
-
-    float a, b;
-    vec4 ovalColor;
-
-    // Check if the pixel is inside any of the ovals
-    for (int i = 0; i < 7; i++) {
-        float noise = texture(uPerlinTexture, vec2(mod(centers[i] + uTime * 0.05, 1.0), 0.5)).r;
-        a = 0.5 + noise * 0.3; // Increased for more coverage
-        b = noise * mix(3.5, 2.5, uInputVolume); // Increased height for fuller appearance
-        bool reverseGradient = (i % 2 == 1); // Reverse gradient for every second oval
-
-        // Calculate the distance in polar coordinates
-        float distTheta = min(
-            abs(theta - centers[i]),
-            min(
-                abs(theta + 2.0 * PI - centers[i]),
-                abs(theta - 2.0 * PI - centers[i])
-            )
-        );
-        float distRadius = radius;
-
-        float softness = 0.6; // Increased softness for flatter, less pronounced edges
-
-        // Check if the pixel is inside the oval in polar coordinates
-        if (drawOval(vec2(distTheta, distRadius), vec2(0.0, 0.0), a, b, reverseGradient, softness, ovalColor)) {
-            // Blend the oval color with the existing color
-            color.rgb = mix(color.rgb, ovalColor.rgb, ovalColor.a);
-            color.a = max(color.a, ovalColor.a); // Max alpha
-        }
-    }
-    
-    // Calculate both noisy rings
-    float ringRadius1 = sharpRing(decomposed, uTime * 0.1);
-    float ringRadius2 = smoothRing(decomposed, uTime * 0.1);
-    
-    // Adjust rings based on input volume (reduced for flatter appearance)
-    float inputRadius1 = radius + uInputVolume * 0.2;
-    float inputRadius2 = radius + uInputVolume * 0.15;
-    float opacity1 = mix(0.2, 0.6, uInputVolume);
-    float opacity2 = mix(0.15, 0.45, uInputVolume);
-
-    // Blend both rings
-    float ringAlpha1 = (inputRadius2 >= ringRadius1) ? opacity1 : 0.0;
-    float ringAlpha2 = smoothstep(ringRadius2 - 0.05, ringRadius2 + 0.05, inputRadius1) * opacity2;
-    
-    float totalRingAlpha = max(ringAlpha1, ringAlpha2);
-    
-    // Apply screen blend mode for combined rings
-    vec3 ringColor = vec3(1.0); // White ring color
-    color.rgb = 1.0 - (1.0 - color.rgb) * (1.0 - ringColor * totalRingAlpha);
-
-    // Define colours to ramp against greyscale (could increase the amount of colours in the ramp)
-    vec3 color1 = vec3(0.0, 0.0, 0.0); // Black
-    vec3 color2 = uColor1; // Darker Color
-    vec3 color3 = uColor2; // Lighter Color
-    vec3 color4 = vec3(1.0, 1.0, 1.0); // White
-
-    // Convert grayscale color to the color ramp
-    float luminance = mix(color.r, 1.0 - color.r, uInverted);
-    color.rgb = colorRamp(luminance, color1, color2, color3, color4); // Apply the color ramp
-
-    // Apply fade-in opacity
-    color.a *= uOpacity;
-
-    gl_FragColor = color;
-}
-`

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import type { ElevenLabs } from "@elevenlabs/elevenlabs-js"
-import { Check, ChevronsUpDown, Pause, Play } from "lucide-react"
+import { Check, ChevronsUpDown, Languages, Pause, Play } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -18,7 +18,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
-import { Orb } from "@/components/ui/orb"
+import { Orb } from "@/components/ui/assistant-button"
 import {
   Popover,
   PopoverContent,
@@ -122,13 +122,6 @@ function VoicePicker({
           >
             {selectedVoice ? (
               <div className="flex items-center gap-2 overflow-hidden">
-                <div className="relative size-6 shrink-0 overflow-visible">
-                  <Orb
-                    agentState="thinking"
-                    colors={orbColors}
-                    className="absolute inset-0"
-                  />
-                </div>
                 <span className="truncate">{selectedVoice.name}</span>
               </div>
             ) : (
@@ -223,11 +216,7 @@ function VoicePickerItem({
         onMouseLeave={() => setIsHovered(false)}
         onClick={handlePreview}
       >
-        <Orb
-          agentState={isPlaying ? "talking" : undefined}
-          colors={orbColors}
-          className="pointer-events-none absolute inset-0"
-        />
+        <Languages className="size-4 text-muted-foreground" />
         {preview && isHovered && (
           <div className="pointer-events-none absolute inset-0 flex size-8 shrink-0 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm transition-opacity hover:bg-black/50">
             {isPlaying ? (
