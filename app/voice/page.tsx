@@ -35,6 +35,7 @@ import {
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { useVapi, CALL_STATUS, type AgentState } from "@/hooks/use-vapi";
+import Link from "next/link";
 
 const VOICE_STORAGE_KEY = "rovo.voice.selected-voice";
 const GENDER_STORAGE_KEY = "rovo.voice.selected-gender";
@@ -409,12 +410,12 @@ export default function VoicePage() {
 
       <div className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-10 p-6">
         <div className="flex w-full flex-col items-center gap-5">
-          <div className="inline-flex items-center gap-2">
+          <Link href="/" className="inline-flex items-center gap-2">
             <RovoLogo className="shrink-0 size-10" />
             <span className="lowercase tracking-tighter text-3xl font-be-vietnam-pro font-light text-foreground">
               Rovo Voice
             </span>
-          </div>
+          </Link>
 
           <div className="inline-flex items-center gap-2 rounded-full border border-border/40 bg-card/60 px-3 py-1.5 backdrop-blur-sm">
             <div className={cn("size-1.5 rounded-full", getStatusColor())} />
