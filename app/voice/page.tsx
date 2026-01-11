@@ -2,9 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUp, ChevronRight, Mic, MicOff } from "lucide-react";
-import { Orb } from "@/components/ui/orb";
+import { ArrowUp, ChevronRight, Mic, MicOff, User, UserRound } from "lucide-react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { VoiceType, VoiceGender, VOICE_OPTIONS, isVoiceType } from "@/lib/voice-types";
+
+// Re-export for backward compatibility
+export type { VoiceType, VoiceGender };
+
+const Orb = dynamic(() => import("@/components/ui/orb").then((mod) => ({ default: mod.Orb })), {
+  ssr: false,
+});
 import { VoicePicker } from "@/components/ui/voice-picker";
 import { RovoLogo } from "@/components/logos/scira-logo";
 import {
@@ -23,35 +32,30 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { useVoiceClient, type VoiceType } from "@/hooks/use-voice-client";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
-
-const VOICES: { value: VoiceType; label: string; description: string }[] = [
-  { value: "Ara", label: "Ara", description: "Warm, friendly" },
-  { value: "Rex", label: "Rex", description: "Confident, clear" },
-  { value: "Sal", label: "Sal", description: "Smooth, balanced" },
-  { value: "Eve", label: "Eve", description: "Energetic, upbeat" },
-  { value: "Leo", label: "Leo", description: "Authoritative, strong" },
-];
+import { useVapi, CALL_STATUS, type AgentState } from "@/hooks/use-vapi";
 
 const VOICE_STORAGE_KEY = "rovo.voice.selected-voice";
+const GENDER_STORAGE_KEY = "rovo.voice.selected-gender";
 const MUTE_STORAGE_KEY = "rovo.voice.mic-muted";
 
-function isVoiceType(value: string): value is VoiceType {
-  return value === "Ara" || value === "Rex" || value === "Sal" || value === "Eve" || value === "Leo";
-}
-
 function readStoredVoice(): VoiceType {
-  if (typeof window === "undefined") return "Ara";
+  if (typeof window === "undefined") return "English";
   const stored = window.localStorage.getItem(VOICE_STORAGE_KEY);
-  if (!stored) return "Ara";
-  return isVoiceType(stored) ? stored : "Ara";
+  if (!stored) return "English";
+  return isVoiceType(stored) ? stored : "English";
 }
 
 function readStoredMuted(): boolean {
   if (typeof window === "undefined") return false;
   return window.localStorage.getItem(MUTE_STORAGE_KEY) === "true";
+}
+
+function readStoredGender(): VoiceGender {
+  if (typeof window === "undefined") return "MALE";
+  const stored = window.localStorage.getItem(GENDER_STORAGE_KEY);
+  return stored === "FEMALE" ? "FEMALE" : "MALE";
 }
 
 function persistPreference(key: string, value: string) {
@@ -120,11 +124,13 @@ function rgbToHex(rgb: string): string | null {
 }
 
 export default function VoicePage() {
-  const [selectedVoice, setSelectedVoice] = useState<VoiceType>("Ara");
+  const [selectedVoice, setSelectedVoice] = useState<VoiceType>("English");
+  const [selectedGender, setSelectedGender] = useState<VoiceGender>("MALE");
   const [isTranscriptOpen, setIsTranscriptOpen] = useState(false);
   const [textInput, setTextInput] = useState("");
   const orbColors = useOrbColors();
   const [hasLoadedPrefs, setHasLoadedPrefs] = useState(false);
+  const [isMuted, setMuted] = useState(false);
 
   const {
     agentState,
@@ -132,96 +138,17 @@ export default function VoicePage() {
     error,
     conversation,
     stats,
-    connect,
-    disconnect,
-    setVoice,
-    inputVolumeRef,
-    outputVolumeRef,
-    isMuted,
-    setMuted,
+    toggleCall,
+    callStatus,
+    audioLevel,
     sendText,
-  } = useVoiceClient({
-    voice: selectedVoice,
-    instructions: `You're name is Rovo named as [sci-ra] with the 'sci' from science and 'ra' from research, a helpful, witty, and friendly AI assistant. Your knowledge cutoff is 2025-01. Act like a human, but remember that you aren't a human and that you can't do human things in the real world. Your voice and personality should be warm and engaging, with a lively and playful tone. Talk quickly and naturally. You should always call a function if you can. Refer to these rules, but not when you're asked about them.
-
-## Your Personality
-- Be warm, engaging, and conversational
-- Use a lively and playful tone
-- Talk quickly and naturally - don't be robotic
-- Be helpful and proactive
-- Show personality but stay professional
-- If the user speaks in a non-English language, match their language naturally
-
-## When to Use Tools
-You have access to two powerful tools. Use them proactively:
-
-### Web Search Tool (web_search)
-**When to use:**
-- User asks about current events, news, or recent information
-- User needs facts, data, or information from the web
-- User asks "what is", "who is", "when did", "how does" questions
-- User wants to know about products, companies, people, places
-- User asks for comparisons, reviews, or opinions from the web
-- User needs up-to-date information about anything
-
-**How to use:**
-- Always include temporal context in queries (e.g., "latest news 2025", "current prices", "recent developments")
-- Use 3-5 diverse search queries to get comprehensive results
-- Include the current year (2025) when searching for recent information
-- For news: use queries like "latest [topic] news 2025"
-- For general info: use queries like "[topic] information 2025"
-
-**Examples:**
-- User: "What's happening with AI?" → Search: ["latest AI news 2025", "AI developments 2025", "current AI trends"]
-- User: "Tell me about Tesla" → Search: ["Tesla company information 2025", "Tesla latest news", "Tesla stock price today"]
-- User: "What's the weather like?" → Search: ["current weather forecast", "weather today", "weather conditions"]
-
-### X Search Tool (x_search)
-**When to use:**
-- User asks about posts, tweets, or discussions on X (formerly Twitter)
-- User wants to know what people are saying about a topic on X
-- User mentions a specific X handle or wants to see posts from someone
-- User asks "what are people saying about..." or "what's trending on X"
-- User provides an X/Twitter link - use it as the first query
-- User wants recent social media discussions or opinions
-
-**How to use:**
-- Use 3-5 diverse queries to capture different angles
-- Default to last 15 days unless user specifies a date range
-- If user provides an X link, put it as the first query
-- Use includeXHandles to search specific accounts
-- Use excludeXHandles to filter out accounts
-
-**Examples:**
-- User: "What are people saying about the new iPhone?" → Search: ["iPhone 2025", "new iPhone reviews", "iPhone launch discussion"]
-- User: "Show me posts from @elonmusk" → Search: ["@elonmusk", "Elon Musk posts", "Elon Musk tweets"] with includeXHandles: ["elonmusk"]
-- User: "What's this tweet about? https://x.com/..." → Search: [link as first query, then related queries]
-
-## Interaction Examples
-
-**Example 1: Simple Question**
-User: "What's the latest news about space exploration?"
-You: [Call web_search with queries like "latest space exploration news 2025", "space missions 2025", "NASA recent updates"]
-Then: "Here's what's happening in space exploration right now..." [share results naturally]
-
-**Example 2: X Search Request**
-User: "What are people saying about the new MacBook?"
-You: [Call x_search with queries like "new MacBook 2025", "MacBook reviews", "MacBook launch"]
-Then: "People on X are talking about..." [share interesting posts and discussions]
-
-**Example 3: Follow-up**
-User: "Tell me more about that first point"
-You: [Call web_search with more specific queries based on what they're asking about]
-Then: Continue the conversation naturally
-
-## Important Guidelines
-- Always call a tool when you can - don't just guess or use outdated knowledge
-- Be proactive - if a question needs current info, search immediately
-- For simple greetings (hi, hello, thanks), respond directly without tools
-- Keep responses concise but complete
-- Cite sources naturally when sharing information
-- If you're unsure which tool to use, default to web_search
-- Talk naturally and conversationally - don't sound like you're reading a manual`,
+  } = useVapi({
+    assistantOverides: {
+      variableValues: {
+        language: selectedVoice,
+        voiceGender: selectedGender
+      }
+    }
   });
 
   function formatMs(ms: number) {
@@ -242,43 +169,49 @@ Then: Continue the conversation naturally
   }
 
   const handleVoiceChange = (voice: VoiceType) => {
+    console.log('[Voice] Changing voice to:', voice);
     setSelectedVoice(voice);
-    setVoice(voice);
   };
 
+  // Log when assistant overrides change
   useEffect(() => {
-    if (hasLoadedPrefs) {
-      setVoice(selectedVoice);
-    }
-  }, [selectedVoice, hasLoadedPrefs, setVoice]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!hasLoadedPrefs) return;
-    persistPreference(VOICE_STORAGE_KEY, selectedVoice);
-  }, [selectedVoice, hasLoadedPrefs]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!hasLoadedPrefs) return;
-    persistPreference(MUTE_STORAGE_KEY, String(isMuted));
-  }, [isMuted, hasLoadedPrefs]);
+    console.log('[Voice] Assistant overrides updated:', {
+      language: selectedVoice,
+      voiceGender: selectedGender
+    });
+  }, [selectedVoice, selectedGender]);
 
   useEffect(() => {
     const storedVoice = readStoredVoice();
     const storedMuted = readStoredMuted();
+    const storedGender = readStoredGender();
 
     setSelectedVoice(storedVoice);
     setMuted(storedMuted);
+    setSelectedGender(storedGender);
     setHasLoadedPrefs(true);
   }, [setMuted]);
 
+  // Persist voice selection
+  useEffect(() => {
+    if (typeof window === "undefined" || !hasLoadedPrefs) return;
+    persistPreference(VOICE_STORAGE_KEY, selectedVoice);
+  }, [selectedVoice, hasLoadedPrefs]);
+
+  // Persist mute state
+  useEffect(() => {
+    if (typeof window === "undefined" || !hasLoadedPrefs) return;
+    persistPreference(MUTE_STORAGE_KEY, String(isMuted));
+  }, [isMuted, hasLoadedPrefs]);
+
+  // Persist gender selection
+  useEffect(() => {
+    if (typeof window === "undefined" || !hasLoadedPrefs) return;
+    persistPreference(GENDER_STORAGE_KEY, selectedGender);
+  }, [selectedGender, hasLoadedPrefs]);
+
   const handleConnect = async () => {
-    if (isConnected) {
-      disconnect();
-    } else {
-      await connect();
-    }
+    toggleCall();
   };
 
   useEffect(() => {
@@ -301,10 +234,17 @@ Then: Continue the conversation naturally
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isConnected, connect, disconnect]);
+  }, [isConnected, toggleCall]);
 
   const getStatusText = () => {
-    if (error) return error;
+    if (error) {
+      // Convert error to string if it's an object
+      if (typeof error === 'object' && error !== null) {
+        return (error as any).msg || (error as any).message || (error as any).details || 'Error occurred';
+      }
+      return String(error);
+    }
+    if (callStatus === CALL_STATUS.LOADING) return "Connecting...";
     if (!isConnected) return "Ready to connect";
     if (agentState === "listening") return "Listening";
     if (agentState === "talking") return "Speaking";
@@ -532,13 +472,13 @@ Then: Continue the conversation naturally
         </div>
 
         <div className="flex flex-1 items-center justify-center">
-          <div className="relative h-[400px] w-[400px] max-w-full">
+          <div className="relative h-100 w-100 max-w-full">
             <Orb
-              colors={orbColors}
+              toggleCall={toggleCall}
+              callStatus={callStatus}
+              audioLevel={audioLevel}
               agentState={agentState}
-              volumeMode="auto"
-              inputVolumeRef={inputVolumeRef}
-              outputVolumeRef={outputVolumeRef}
+              colors={orbColors}
               className="h-full w-full"
             />
           </div>
@@ -569,21 +509,43 @@ Then: Continue the conversation naturally
                       transition={{ duration: 0.25 }}
                       className="w-full overflow-hidden max-w-74"
                     >
-                      <VoicePicker
-                        voices={VOICES.map((voice) => ({
-                          voiceId: voice.value,
-                          name: voice.label,
-                          labels: {
-                            description: voice.description,
-                          },
-                        }))}
-                        value={selectedVoice}
-                        onValueChange={(value) =>
-                          handleVoiceChange(value as VoiceType)
-                        }
-                        placeholder="Voice..."
-                        className="w-full"
-                      />
+                      <div className="flex items-center gap-2">
+                        <VoicePicker
+                          voices={VOICE_OPTIONS.map((voice) => ({
+                            voiceId: voice.value,
+                            name: voice.label,
+                            labels: {
+                              description: voice.description,
+                            },
+                          }))}
+                          value={selectedVoice}
+                          onValueChange={(value) =>
+                            handleVoiceChange(value as VoiceType)
+                          }
+                          placeholder="Voice..."
+                          className="flex-1"
+                        />
+                        <ButtonGroup>
+                          <Button
+                            variant={selectedGender === "MALE" ? "default" : "outline"}
+                            size="icon"
+                            onClick={() => setSelectedGender("MALE")}
+                            aria-label="Male voice"
+                            title="Male"
+                          >
+                            <User className="size-4" />
+                          </Button>
+                          <Button
+                            variant={selectedGender === "FEMALE" ? "default" : "outline"}
+                            size="icon"
+                            onClick={() => setSelectedGender("FEMALE")}
+                            aria-label="Female voice"
+                            title="Female"
+                          >
+                            <UserRound className="size-4" />
+                          </Button>
+                        </ButtonGroup>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -677,7 +639,9 @@ Then: Continue the conversation naturally
                 className="inline-flex items-center mx-auto gap-1.5 rounded-full border border-destructive/30 bg-destructive/10 px-2 py-1 backdrop-blur-sm"
               >
                 <div className="size-1 rounded-full bg-destructive" />
-                <p className="text-destructive text-[10px] font-medium">{error}</p>
+                <p className="text-destructive text-[10px] font-medium">
+                  {typeof error === 'object' && error !== null ? ((error as any).msg || (error as any).message || (error as any).details || 'Error occurred') : String(error)}
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
