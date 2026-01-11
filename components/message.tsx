@@ -620,7 +620,7 @@ export const Message: React.FC<MessageProps> = ({
                           disabled={status === 'submitted' || status === 'streaming'}
                           aria-label="Edit message"
                         >
-                          <HugeiconsIcon icon={PencilEdit02Icon} size={18} className="size-[18px]" />
+                          <HugeiconsIcon icon={PencilEdit02Icon} size={18} className="size-4.5" />
                         </button>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -643,7 +643,7 @@ export const Message: React.FC<MessageProps> = ({
                         className="p-1.5 rounded-full hover:bg-accent/80 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
                         aria-label="Copy message"
                       >
-                        <HugeiconsIcon icon={Copy01Icon} size={18} className="size-[18px]" />
+                        <HugeiconsIcon icon={Copy01Icon} size={18} className="size-4.5" />
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -656,7 +656,7 @@ export const Message: React.FC<MessageProps> = ({
                 <div className="max-w-full">
                   <div
                     ref={messageContentRef}
-                    className={`relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[125px] overflow-hidden' : ''}`}
+                    className={`relative ${!isExpanded && exceedsMaxHeight ? 'max-h-31.25 overflow-hidden' : ''}`}
                   >
                     <div className="bg-accent/80 rounded-md px-4 py-2.5">
                       <div className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-0 prose-pre:my-1 prose-code:before:hidden prose-code:after:hidden font-sans font-normal max-w-none ${getDynamicFontSize(combinedUserText)} text-foreground dark:text-foreground`}>
@@ -955,7 +955,7 @@ export const EditableAttachmentsBadge = ({
                     <div className="bg-muted dark:bg-muted py-1.5 px-2 flex items-center justify-between border-b border-border dark:border-border">
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-red-500 dark:text-red-400" />
-                        <span className="text-sm font-medium text-foreground dark:text-foreground truncate max-w-[200px]">
+                        <span className="text-sm font-medium text-foreground dark:text-foreground truncate max-w-50">
                           {fileAttachments[selectedIndex].name || `PDF ${selectedIndex + 1}`}
                         </span>
                       </div>
@@ -1241,7 +1241,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] })
                     <div className="bg-muted dark:bg-muted py-1.5 px-2 flex items-center justify-between border-b border-border dark:border-border">
                       <div className="flex items-center gap-2">
                         <FileText className="h-4 w-4 text-red-500 dark:text-red-400" />
-                        <span className="text-sm font-medium text-foreground dark:text-foreground truncate max-w-[200px]">
+                        <span className="text-sm font-medium text-foreground dark:text-foreground truncate max-w-50">
                           {fileAttachments[selectedIndex].name || `PDF ${selectedIndex + 1}`}
                         </span>
                       </div>

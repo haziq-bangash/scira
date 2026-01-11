@@ -188,7 +188,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
       id: 'feedback',
       label: 'Feedback',
       icon: BugIcon,
-      href: 'https://rovo.userjot.com',
+      href: 'https://rovoai.userjot.com',
       external: true,
     },
   ];
@@ -798,20 +798,9 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                           </a>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <a href="https://rovo.userjot.com" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
+                          <a href="https://rovoai.userjot.com" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
                             <BugIcon size={16} weight="regular" className="mr-2" />
                             <span>Feedback</span>
-                          </a>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <a
-                            href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fhaziqbangash%2Frovo"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={closeMobileSidebar}
-                          >
-                            <VercelIcon size={16} className="mr-2" />
-                            <span>Deploy</span>
                           </a>
                         </DropdownMenuItem>
                       </DropdownMenuSubContent>
@@ -908,7 +897,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
       {user && (
         <>
           <Dialog open={Boolean(renameTarget)} onOpenChange={(open) => (!open ? closeRenameDialog() : null)}>
-            <DialogContent className="sm:max-w-[420px]">
+            <DialogContent className="sm:max-w-105">
               <DialogHeader>
                 <DialogTitle>Edit title</DialogTitle>
               </DialogHeader>

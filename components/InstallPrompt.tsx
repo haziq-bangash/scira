@@ -57,7 +57,7 @@ export function InstallPrompt() {
               whileHover={{ scale: 1.1, rotate: 90 }}
               whileTap={{ scale: 0.9 }}
               onClick={handleDismiss}
-              className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors flex-shrink-0 -mr-1 -mt-1"
+              className="p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors shrink-0 -mr-1 -mt-1"
               aria-label="Close install prompt"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">

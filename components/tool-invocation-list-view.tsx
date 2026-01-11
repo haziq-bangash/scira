@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React, { memo, useEffect, useState, lazy } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
 
@@ -68,7 +68,7 @@ export const SearchLoadingState = ({
   const variant = colorVariants[color];
 
   return (
-    <Card className="relative w-full h-[100px] my-4 overflow-hidden shadow-none">
+    <Card className="relative w-full h-25 my-4 overflow-hidden shadow-none">
       <BorderTrail className={cn('bg-linear-to-l', variant.border)} size={80} />
       <CardContent className="px-6!">
         <div className="relative flex items-center justify-between">
@@ -126,7 +126,7 @@ export const NearbySearchSkeleton = ({ type }: { type: string }) => {
       <div className="w-full h-full flex flex-col">
         {/* Map area */}
         <div className="relative flex-1 min-h-[45%] bg-neutral-100 dark:bg-neutral-800 animate-pulse">
-          <div className="absolute inset-0 bg-gradient-to-br from-neutral-200 dark:from-neutral-700 to-transparent opacity-50" />
+          <div className="absolute inset-0 bg-linear-to-br from-neutral-200 dark:from-neutral-700 to-transparent opacity-50" />
 
           {/* Mock markers */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
@@ -181,11 +181,11 @@ export const NearbySearchSkeleton = ({ type }: { type: string }) => {
 
 // Modern code interpreter components
 const LineNumbers = memo(({ count }: { count: number }) => (
-  <div className="hidden sm:block select-none w-8 sm:w-10 flex-shrink-0 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/30 py-0">
+  <div className="hidden sm:block select-none w-8 sm:w-10 shrink-0 border-r border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800/30 py-0">
     {Array.from({ length: count }, (_, i) => (
       <div
         key={i}
-        className="text-[10px] h-[20px] flex items-center justify-end text-neutral-500 dark:text-neutral-400 pr-2 font-mono"
+        className="text-[10px] h-5 flex items-center justify-end text-neutral-500 dark:text-neutral-400 pr-2 font-mono"
       >
         {i + 1}
       </div>
@@ -221,7 +221,7 @@ const CodeBlock = memo(({ code }: { code: string; language: string }) => {
     <div className="flex bg-neutral-50 dark:bg-neutral-900/70">
       <LineNumbers count={lines.length} />
       <div className="overflow-x-auto w-full">
-        <pre className="py-0 px-2 sm:px-3 m-0 font-mono text-[11px] sm:text-xs leading-[20px] text-neutral-800 dark:text-neutral-300">
+        <pre className="py-0 px-2 sm:px-3 m-0 font-mono text-[11px] sm:text-xs leading-5 text-neutral-800 dark:text-neutral-300">
           {code}
         </pre>
       </div>
@@ -236,7 +236,7 @@ const OutputBlock = memo(({ output, error }: { output?: string; error?: string }
   return (
     <div
       className={cn(
-        'font-mono text-[11px] sm:text-xs leading-[20px] py-0 px-2 sm:px-3',
+        'font-mono text-[11px] sm:text-xs leading-5 py-0 px-2 sm:px-3',
         error
           ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
           : 'bg-neutral-100 dark:bg-neutral-800/50 text-neutral-700 dark:text-neutral-300',
@@ -290,7 +290,7 @@ export function CodeInterpreterView({
               {language}
             </div>
           </div>
-          <h3 className="text-xs font-medium text-neutral-700 dark:text-neutral-200 truncate max-w-[160px] sm:max-w-xs">
+          <h3 className="text-xs font-medium text-neutral-700 dark:text-neutral-200 truncate max-w-40 sm:max-w-xs">
             {title || 'Code Execution'}
           </h3>
           <StatusBadge status={status || 'completed'} />

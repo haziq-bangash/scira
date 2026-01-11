@@ -8,8 +8,9 @@ import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import Image from 'next/image';
 
 interface MediaDetails {
-  id: number;
-  media_type: 'movie' | 'tv';
+  id: string;
+  imdb_id: string;
+  media_type: string;
   title?: string;
   name?: string;
   overview: string;
@@ -17,11 +18,10 @@ interface MediaDetails {
   backdrop_path: string | null;
   vote_average: number;
   vote_count: number;
-  release_date?: string;
-  first_air_date?: string;
-  runtime?: number;
-  episode_run_time?: number[];
-  genres: Array<{ id: number; name: string }>;
+  release_date?: string | null;
+  first_air_date?: string | null;
+  runtime?: number | null;
+  genres: string[];
   credits: {
     cast: Array<{
       id: number;
@@ -29,14 +29,17 @@ interface MediaDetails {
       character: string;
       profile_path: string | null;
     }>;
+    director?: string | null;
+    writer?: string | null;
   };
-  origin_country?: string[];
-  original_language: string;
-  production_companies?: Array<{
-    id: number;
-    name: string;
-    logo_path: string | null;
-  }>;
+  status?: string | null;
+  language?: string | null;
+  country?: string | null;
+  awards?: string | null;
+  rated?: string | null;
+  year?: string | null;
+  network?: string | null;
+  total_seasons?: number | null;
 }
 
 interface TMDBResultProps {
@@ -69,7 +72,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
   const DetailContent = () => (
     <div className="flex flex-col max-h-[80vh] bg-black">
       {/* Hero Section with Backdrop */}
-      <div className="relative w-full aspect-16/9 sm:aspect-21/9">
+      <div className="relative w-full aspect-video sm:aspect-21/9">
         {media.backdrop_path ? (
           <>
             <Image
@@ -90,7 +93,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
         <div className="absolute bottom-0 left-0 right-0">
           <div className="relative p-4 sm:p-6 flex flex-col sm:flex-row gap-6 items-end">
             {/* Poster */}
-            <div className="relative w-[120px] sm:w-[160px] aspect-2/3 rounded-lg overflow-hidden shadow-2xl hidden sm:block">
+            <div className="relative w-30 sm:w-40 aspect-2/3 rounded-lg overflow-hidden shadow-2xl hidden sm:block">
               {media.poster_path ? (
                 <Image src={media.poster_path} alt={media.title || media.name || ''} fill className="object-cover" />
               ) : (
@@ -118,10 +121,10 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
                     <span>{formatDate(media.release_date || media.first_air_date || '')}</span>
                   </div>
                 )}
-                {(media.runtime || media.episode_run_time?.[0]) && (
+                {media.runtime && (
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-4 h-4" />
-                    <span>{formatRuntime(media.runtime || media.episode_run_time?.[0] || 0)}</span>
+                    <span>{formatRuntime(media.runtime)}</span>
                   </div>
                 )}
               </div>
@@ -135,14 +138,14 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
         <div className="relative p-4 sm:p-6 space-y-8">
           {/* Genres */}
           <div className="flex flex-wrap gap-2">
-            {media.genres.map((genre) => (
+            {media.genres.map((genre, index) => (
               <span
-                key={genre.id}
+                key={index}
                 className="px-3 py-1 text-sm rounded-full border border-neutral-800
                                          bg-neutral-900/50 text-neutral-200
                                          hover:bg-neutral-800 transition-colors"
               >
-                {genre.name}
+                {genre}
               </span>
             ))}
           </div>
@@ -205,7 +208,7 @@ const TMDBResult = ({ result }: TMDBResultProps) => {
         onClick={() => setShowDetails(true)}
       >
         <div className="flex flex-col sm:flex-row gap-4 p-4 sm:p-5">
-          <div className="relative w-[140px] sm:w-[160px] mx-auto sm:mx-0 aspect-2/3 rounded-lg overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+          <div className="relative w-35 sm:w-40 mx-auto sm:mx-0 aspect-2/3 rounded-lg overflow-hidden shadow-lg group-hover:shadow-xl transition-shadow duration-300">
             {media.poster_path ? (
               <Image src={media.poster_path} alt={media.title || media.name || ''} fill className="object-cover" />
             ) : (

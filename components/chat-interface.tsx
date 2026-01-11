@@ -885,7 +885,7 @@ const ChatInterface = memo(
                             </Avatar>
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" sideOffset={6} className="rounded-md w-[260px]">
+                        <DropdownMenuContent align="start" sideOffset={6} className="rounded-md w-65">
                           <div className="px-3 py-2">
                             <div className="space-y-2">
                               <div className="flex items-center justify-between gap-3">
@@ -928,7 +928,7 @@ const ChatInterface = memo(
                                 variant="ghost"
                                 size="sm"
                                 className={cn(
-                                  'h-8 px-2 w-auto max-w-[250px] justify-start rounded-md hover:bg-accent group-hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed',
+                                  'h-8 px-2 w-auto max-w-62.5 justify-start rounded-md hover:bg-accent group-hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed',
                                   headerMenuOpen && 'bg-accent',
                                 )}
                                 onClick={handleStartEditTitle}
@@ -992,7 +992,7 @@ const ChatInterface = memo(
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 px-2 w-auto max-w-[250px] justify-start rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="h-8 px-2 w-auto max-w-62.5 justify-start rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
                           onClick={handleStartEditTitle}
                           disabled={status === 'submitted' || status === 'streaming'}
                         >
@@ -1323,7 +1323,7 @@ const ChatInterface = memo(
         )}
         {(initialChatId || (pathname?.startsWith('/search/') ? pathname.split('/')[2] : null)) && (
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="sm:max-w-[420px]">
+            <DialogContent className="sm:max-w-105">
               <DialogHeader>
                 <DialogTitle>Edit title</DialogTitle>
               </DialogHeader>
