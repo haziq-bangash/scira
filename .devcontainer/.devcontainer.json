@@ -1,8 +1,5 @@
-// .devcontainer/devcontainer.json
 {
   "name": "Codespace with Bun",
   "image": "mcr.microsoft.com/devcontainers/base:latest",
-  "features": {
-    "ghcr.io/rails/devcontainer/features/bun:1": {}
-  }
+  "postCreateCommand": "curl -fsSL https://bun.sh/install | bash"
 }
