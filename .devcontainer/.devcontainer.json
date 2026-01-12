@@ -1,0 +1,8 @@
+// .devcontainer/devcontainer.json
+{
+  "name": "Codespace with Bun",
+  "image": "mcr.microsoft.com/devcontainers/base:latest",
+  "features": {
+    "ghcr.io/rails/devcontainer/features/bun:1": {}
+  }
+}
