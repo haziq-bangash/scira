@@ -10,7 +10,7 @@ import { useChat } from '@ai-sdk/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { Crown02Icon, UserCircleIcon } from '@hugeicons/core-free-icons';
-import { PlusIcon } from '@phosphor-icons/react';
+import { PlusIcon } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { toast } from 'sonner';

@@ -1639,7 +1639,7 @@ ${REDDIT_LINK_FORMAT_EXAMPLES}`,
   Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
   ### Guidelines:
-  - You do not have access to any tools. You can code like a professional software engineer.
+  - You have access to the tools. You can code like a professional software engineer.
   - Markdown is the only formatting you can use.
   - Do not ask for clarification before giving your best response
   - You can use latex formatting:

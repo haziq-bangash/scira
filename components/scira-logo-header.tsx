@@ -1,4 +1,3 @@
-import React from 'react';
 import { RovoLogo } from './logos/scira-logo';
 
 export const RovoLogoHeader = () => (

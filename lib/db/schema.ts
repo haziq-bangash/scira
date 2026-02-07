@@ -313,6 +313,32 @@ export const lookout = pgTable('lookout', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
+// Document index table for PDF RAG indexing
+export const documentIndex = pgTable(
+  'document_index',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    chatId: text('chat_id')
+      .notNull()
+      .references(() => chat.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    fileName: text('file_name').notNull(),
+    fileUrl: text('file_url').notNull(),
+    totalPages: integer('total_pages'),
+    status: text('status').notNull().default('pending'), // pending | processing | ready | failed
+    treeIndex: json('tree_index'), // The full PageIndexRAG DocumentIndex tree
+    pageContents: json('page_contents'), // Raw page texts for retrieval (PageContent[])
+    error: text('error'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => [index('document_index_chatId_idx').on(table.chatId), index('document_index_userId_idx').on(table.userId)],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
@@ -347,6 +373,7 @@ export const chatRelations = relations(chat, ({ one, many }) => ({
   }),
   messages: many(message),
   streams: many(stream),
+  documentIndices: many(documentIndex),
 }));
 
 export const messageRelations = relations(message, ({ one }) => ({
@@ -370,6 +397,17 @@ export const lookoutRelations = relations(lookout, ({ one }) => ({
   }),
 }));
 
+export const documentIndexRelations = relations(documentIndex, ({ one }) => ({
+  chat: one(chat, {
+    fields: [documentIndex.chatId],
+    references: [chat.id],
+  }),
+  user: one(user, {
+    fields: [documentIndex.userId],
+    references: [user.id],
+  }),
+}));
+
 export type User = InferSelectModel<typeof user>;
 export type Session = InferSelectModel<typeof session>;
 export type Account = InferSelectModel<typeof account>;
@@ -385,3 +423,4 @@ export type MessageUsage = InferSelectModel<typeof messageUsage>;
 export type CustomInstructions = InferSelectModel<typeof customInstructions>;
 export type UserPreferences = InferSelectModel<typeof userPreferences>;
 export type Lookout = InferSelectModel<typeof lookout>;
+export type DocumentIndexRecord = InferSelectModel<typeof documentIndex>;

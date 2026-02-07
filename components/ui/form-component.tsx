@@ -28,7 +28,7 @@ import { ComprehensiveUserData } from '@/hooks/use-user-data';
 import { checkImageModeration, enhancePrompt, getDiscountConfigAction, getUserCountryCode } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
 import { PRICING, SEARCH_LIMITS } from '@/lib/constants';
-import { LockIcon, Eye, Brain, FilePdf } from '@phosphor-icons/react';
+import { Lock as LockIcon, Eye, Brain, FileText as FilePdf, ChevronDown as CaretDownIcon } from 'lucide-react';
 import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import {
   CpuIcon,
@@ -53,7 +53,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/lib/connectors';
 import { useQuery } from '@tanstack/react-query';
 import { listUserConnectorsAction } from '@/app/actions';
-import { CaretDownIcon } from '@phosphor-icons/react/dist/ssr';
 
 // Pro Badge Component
 const ProBadge = ({ className = '' }: { className?: string }) => (
@@ -2769,6 +2768,31 @@ const FormComponent: React.FC<FormComponentProps> = ({
     [setSelectedConnectors],
   );
 
+  // Fire-and-forget: trigger background PDF indexing after upload
+  const triggerPdfIndexing = useCallback(
+    (uploadedAttachments: Attachment[]) => {
+      const pdfAttachments = uploadedAttachments.filter(
+        (a) => a.contentType === 'application/pdf' && a.url,
+      );
+      if (pdfAttachments.length === 0) return;
+
+      for (const attachment of pdfAttachments) {
+        fetch('/api/pdf-index', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chatId,
+            fileUrl: attachment.url,
+            fileName: attachment.name ?? 'document.pdf',
+          }),
+        }).catch((err) =>
+          console.error('[PDF Indexing] Failed to trigger indexing for', attachment.name, err),
+        );
+      }
+    },
+    [chatId],
+  );
+
   const uploadFile = useCallback(async (file: File): Promise<Attachment> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -2954,6 +2978,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
         if (uploadedAttachments.length > 0) {
           setAttachments((currentAttachments) => [...currentAttachments, ...uploadedAttachments]);
+          triggerPdfIndexing(uploadedAttachments);
 
           toast.success(
             `${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? 's' : ''} uploaded successfully`,
@@ -2969,7 +2994,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         event.target.value = '';
       }
     },
-    [attachments.length, setAttachments, selectedModel, setSelectedModel, isProUser, uploadFile],
+    [attachments.length, setAttachments, selectedModel, setSelectedModel, isProUser, uploadFile, triggerPdfIndexing],
   );
 
   const removeAttachment = useCallback(
@@ -3217,6 +3242,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
           if (uploadedAttachments.length > 0) {
             setAttachments((currentAttachments) => [...currentAttachments, ...uploadedAttachments]);
+            triggerPdfIndexing(uploadedAttachments);
 
             toast.success(
               `${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? 's' : ''} uploaded successfully`,
@@ -3232,7 +3258,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
       }, 100);
     },
-    [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel, isProUser],
+    [attachments.length, setAttachments, uploadFile, selectedModel, setSelectedModel, getFirstVisionModel, isProUser, triggerPdfIndexing],
   );
 
   const handlePaste = useCallback(
@@ -3380,7 +3406,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
         sendMessage({
           role: 'user',
           parts: [
-            ...attachments.map((attachment) => ({
+            ...attachments.filter(
+              // filter out pdf docs
+              (a) => a.contentType !== 'application/pdf' && a.mediaType !== 'application/pdf',
+            ).map((attachment) => ({
               type: 'file' as const,
               url: attachment.url,
               name: attachment.name,
