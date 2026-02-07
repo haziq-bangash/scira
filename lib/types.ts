@@ -29,6 +29,7 @@ import type {
   SearchMemoryTool,
   AddMemoryTool,
   codeContextTool,
+  createPdfSearchTool
 } from '@/lib/tools';
 
 import type { InferUITool, UIMessage } from 'ai';
@@ -135,6 +136,7 @@ type createConnectorsSearchTool = InferUITool<ReturnType<typeof createConnectors
 type createMemoryTools = InferUITool<SearchMemoryTool>;
 type addMemoryTools = InferUITool<AddMemoryTool>;
 type codeContextTool = InferUITool<typeof codeContextTool>;
+type searchPDFTool = InferUITool<ReturnType<typeof createPdfSearchTool>>;
 
 // type mcpSearchTool = InferUITool<typeof mcpSearchTool>;
 
@@ -175,6 +177,7 @@ export type ChatTools = {
   connectors_search: createConnectorsSearchTool;
   search_memories: createMemoryTools;
   add_memory: addMemoryTools;
+  pdf_search: searchPDFTool;
 
   code_context: codeContextTool;
 };

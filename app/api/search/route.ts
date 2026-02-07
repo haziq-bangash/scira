@@ -68,6 +68,7 @@ import {
   extremeSearchTool,
   createConnectorsSearchTool,
   codeContextTool,
+  createPdfSearchTool,
 } from '@/lib/tools';
 import { GroqProviderOptions } from '@ai-sdk/groq';
 import { markdownJoinerTransform } from '@/lib/parser';
@@ -477,10 +478,12 @@ export async function POST(req: Request) {
           maxOutputTokens: getMaxOutputTokens(model),
         } : {}),
         maxRetries: 10,
-        activeTools:
-          model === 'rovo-qwen-coder-plus'
+        activeTools: [
+          ...(model === 'rovo-qwen-coder-plus'
             ? [...activeTools].filter((tool) => tool !== 'code_interpreter')
-            : [...activeTools],
+            : [...activeTools]),
+          ...(isProUser ? ['pdf_search'] : []),
+        ],
         experimental_transform: markdownJoinerTransform(),
         system:
           instructions +
@@ -735,6 +738,7 @@ export async function POST(req: Request) {
             search_memories: memoryTools.searchMemories as any,
             add_memory: memoryTools.addMemory as any,
             connectors_search: createConnectorsSearchTool(user.id, selectedConnectors),
+            ...(isProUser ? { pdf_search: createPdfSearchTool(id) } : {}),
           } as any;
         })(),
         experimental_repairToolCall: async ({ toolCall, tools, inputSchema, error }) => {

@@ -252,7 +252,6 @@ enum SearchCategory {
   NEWS = 'news',
   COMPANY = 'company',
   RESEARCH_PAPER = 'research paper',
-  GITHUB = 'github',
   FINANCIAL_REPORT = 'financial report',
 }
 

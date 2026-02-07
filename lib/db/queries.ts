@@ -14,6 +14,8 @@ import {
   customInstructions,
   userPreferences,
   lookout,
+  documentIndex,
+  type DocumentIndexRecord,
 } from './schema';
 import { ChatSDKError } from '../errors';
 import { db, getReadReplica, maindb } from './index';
@@ -921,5 +923,101 @@ export async function deleteLookout({ id }: { id: string }) {
     return deletedLookout;
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to delete lookout');
+  }
+}
+
+// ===========================================================================
+// DOCUMENT INDEX (PDF RAG)
+// ===========================================================================
+
+export async function saveDocumentIndex({
+  chatId,
+  userId,
+  fileName,
+  fileUrl,
+}: {
+  chatId: string;
+  userId: string;
+  fileName: string;
+  fileUrl: string;
+}): Promise<DocumentIndexRecord> {
+  try {
+    const [record] = await db
+      .insert(documentIndex)
+      .values({
+        chatId,
+        userId,
+        fileName,
+        fileUrl,
+        status: 'pending',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return record;
+  } catch (error) {
+    console.error('[saveDocumentIndex] Database error:', error);
+    throw new ChatSDKError('bad_request:database', 'Failed to save document index');
+  }
+}
+
+export async function updateDocumentIndex({
+  id,
+  status,
+  treeIndex,
+  pageContents,
+  totalPages,
+  error,
+}: {
+  id: string;
+  status?: string;
+  treeIndex?: unknown;
+  pageContents?: unknown;
+  totalPages?: number;
+  error?: string;
+}) {
+  try {
+    const updates: Record<string, unknown> = { updatedAt: new Date() };
+    if (status !== undefined) updates.status = status;
+    if (treeIndex !== undefined) updates.treeIndex = treeIndex;
+    if (pageContents !== undefined) updates.pageContents = pageContents;
+    if (totalPages !== undefined) updates.totalPages = totalPages;
+    if (error !== undefined) updates.error = error;
+
+    await db.update(documentIndex).set(updates).where(eq(documentIndex.id, id));
+  } catch (err) {
+    throw new ChatSDKError('bad_request:database', 'Failed to update document index');
+  }
+}
+
+export async function getDocumentIndicesByChatId(chatId: string): Promise<DocumentIndexRecord[]> {
+  try {
+    return await getReadReplica().select().from(documentIndex).where(eq(documentIndex.chatId, chatId));
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get document indices');
+  }
+}
+
+export async function getReadyDocumentIndicesByChatId(chatId: string): Promise<DocumentIndexRecord[]> {
+  try {
+    return await getReadReplica()
+      .select()
+      .from(documentIndex)
+      .where(and(eq(documentIndex.chatId, chatId), eq(documentIndex.status, 'ready')));
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get ready document indices');
+  }
+}
+
+export async function getDocumentIndexByFileUrl(fileUrl: string): Promise<DocumentIndexRecord | null> {
+  try {
+    const [record] = await getReadReplica()
+      .select()
+      .from(documentIndex)
+      .where(eq(documentIndex.fileUrl, fileUrl))
+      .limit(1);
+    return record || null;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get document index by file URL');
   }
 }
